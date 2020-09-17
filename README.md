@@ -1,1 +1,2 @@
-# local-hub
+# home-server
+Local hub
