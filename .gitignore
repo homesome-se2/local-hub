@@ -1,7 +1,7 @@
-#Home server specifics
+# HomeSome specifics
 # config.json files etc..
 
-#Compiler output (IntelliJ)
+# Compiler output (IntelliJ)
 **/out/
 **/artifacts/
 
