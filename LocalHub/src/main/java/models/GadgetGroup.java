@@ -1,6 +1,8 @@
 package models;
 
 public class GadgetGroup {
+    //TODO
+    //Create groups.json and read into groupsList in ClientApp
     String name;
     int[] gadgets;
 

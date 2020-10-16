@@ -17,22 +17,26 @@ public class GadgetBasic extends Gadget {
 
     @Override
     public void poll() {
+        //TODO
         // Implement
     }
 
     @Override
     public void alterState(float requestedState) throws Exception {
+        //TODO
         // Implement
     }
 
     @Override
     protected String sendCommand(String command) throws Exception {
+        //TODO
         // Implement
         return null;
     }
 
     @Override
     public void setState(float newState) {
+        //TODO
         // Implement
         super.setState(newState);
     }

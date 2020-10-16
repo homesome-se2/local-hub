@@ -38,6 +38,10 @@ public class ClientApp {
         try {
             //Print message
             System.out.println("\nWelcome to LocalHub\n");
+            //TODO
+            //-Read from json files
+            //-Setup Settings
+
             //Start connection with server using websockets
             ServerConnection.getInstance().connectToServer();
             //read clint input to send to server(outputThread)
@@ -80,11 +84,22 @@ public class ClientApp {
                 case "102":
                     successfulManualLogin(commands);
                     break;
+                case "121":
+                    //PS --> H login successful
+                    break;
+                case "302":
+                    break;
+                case "312":
+                    //PS forwards request to send gadgets state
+                    break;
                 case "304":
                     recevieAllGadgets(commands);
                     break;
                 case "316":
                     gadgetStateUpdate(commands);
+                    break;
+                case "371":
+                    //PS forwards request to get gadget groups
                     break;
                 case "901":
                     System.out.println("ExceptionMessage: " + commands[1]);
