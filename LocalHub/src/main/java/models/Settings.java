@@ -1,5 +1,5 @@
 package models;
 
-public class Automation {
+public class Settings {
     //TODO
 }
