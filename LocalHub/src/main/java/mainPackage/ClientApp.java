@@ -2,6 +2,8 @@ package mainPackage;
 
 import communicationResources.ServerConnection;
 import models.Gadget;
+import models.GadgetBasic;
+import models.GadgetType;
 
 import java.util.HashMap;
 import java.util.Scanner;
@@ -17,7 +19,6 @@ public class ClientApp {
         this.gadgets = new HashMap<Integer, Gadget>();
         this.lockObject_1 = new Object();
         this.terminate = false;
-
         this.outputThread = new Thread(new Runnable() {
             public void run() {
                 try {
@@ -41,7 +42,7 @@ public class ClientApp {
             ServerConnection.getInstance().connectToServer();
             //read clint input to send to server(outputThread)
             outputThread.start();
-            //procces inputs read from server
+            //proccess inputs read from server
             inputFromServer();
         }catch (Exception e){
             e.printStackTrace();
@@ -59,6 +60,10 @@ public class ClientApp {
 
     private void outputToServer() {
         Scanner scanner = new Scanner(System.in);
+        //Log in directly (within 2 sec)
+        String logIn = "101::Test::Test123";
+        ServerConnection.getInstance().writeToServer(logIn);
+
         while (!terminate) {
             String hosoRequest = scanner.nextLine().trim();
 
@@ -73,16 +78,20 @@ public class ClientApp {
 
             switch (commands[0]) {
                 case "102":
+                    successfulManualLogin(commands);
                     break;
                 case "304":
+                    recevieAllGadgets(commands);
                     break;
                 case "316":
+                    gadgetStateUpdate(commands);
                     break;
                 case "901":
+                    System.out.println("ExceptionMessage: " + commands[1]);
                     break;
                 default:
+                    System.out.println("\n\n Unknown message from server \n\n");
                     break;
-
             }
         }
     }
@@ -111,7 +120,7 @@ public class ClientApp {
             float state = Float.parseFloat(commands[count++]);
             long pollDelaySeconds = Long.parseLong(commands[count++]);
 
-            gadgets.put(gadgetID, new Gadget_Basic(gadgetID, alias, type, valueTemplate, state, pollDelaySeconds));
+            gadgets.put(gadgetID, new GadgetBasic(gadgetID, alias, type, valueTemplate, state, pollDelaySeconds));
         }
         printGadgets();
     }
@@ -127,12 +136,14 @@ public class ClientApp {
 
     private void printGadgets(){
         if (!gadgets.isEmpty()){
-            System.out.println("=== ALL GADGETS ===");
+            System.out.println("=== ALL GADGETS ===\n");
+            for(int key : gadgets.keySet()){
+                System.out.println("Alias: " + gadgets.get(key).alias +"\n" +
+                        "State: " + gadgets.get(key).getState());
+            }
+            System.out.println("====================");
         }
 
-        for(int key : gadgets.keySet()){
-            key.
-        }
 
     }
 }

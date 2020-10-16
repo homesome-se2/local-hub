@@ -64,6 +64,7 @@ public class ServerConnection {
     public void onServerConnect(Session session) {
         this.session = session;
         connectedToServer = true;
+        System.out.println("Connected To Server");
     }
 
     public void onServerClose() {
