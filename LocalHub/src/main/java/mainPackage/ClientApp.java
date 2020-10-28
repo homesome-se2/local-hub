@@ -102,17 +102,7 @@ public class ClientApp {
                     //Request of gadgets (newly logged in client)
                     break;
                 case "312":
-<<<<<<< HEAD
-                    //PS forwards request to send gadgets state
-                    break;
-                case "304":
-                    receiveAllGadgets(commands);
-                    break;
-                case "316":
-                    gadgetStateUpdate(commands);
-=======
                     //Request to alter gadget state
->>>>>>> master
                     break;
                 case "371":
                     //request to get gadget groups
@@ -144,8 +134,8 @@ public class ClientApp {
 
     }
 
-<<<<<<< HEAD
-    private void receiveAllGadgets(String[] commands)throws Exception{
+
+    private void receiveAllGadgets(String[] commands) throws Exception {
         int nbrOfGadgets = Integer.parseInt(commands[1]);
         int count = 2;
         for (int i = 0; i < nbrOfGadgets; i++) {
@@ -155,11 +145,12 @@ public class ClientApp {
             String valueTemplate = commands[count++];
             float state = Float.parseFloat(commands[count++]);
             long pollDelaySeconds = Long.parseLong(commands[count++]);
-=======
+        }
+    }
+
     //312 Alter gadget state
     private void alterGadgetState() {
     }
->>>>>>> master
 
     //371 request of gadget Groups
     private void requestOfGadgetGroups() {
@@ -223,3 +214,4 @@ public class ClientApp {
     }
 
 }
+
