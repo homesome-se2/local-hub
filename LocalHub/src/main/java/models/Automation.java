@@ -10,6 +10,13 @@ public class Automation {
     private float masterState;
     private float slaveState;
 
+    public Automation(int masterId, int slaveId, float masterState, float slaveState){
+        this.masterId = masterId;
+        this.slaveId = slaveId;
+        this.masterState = masterState;
+        this.slaveState = slaveState;
+    }
+
     public int getMasterId() {
         return masterId;
     }
