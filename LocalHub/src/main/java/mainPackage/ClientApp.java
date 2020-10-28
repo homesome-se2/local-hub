@@ -70,7 +70,6 @@ public class ClientApp {
 
         while (!terminate) {
             String hosoRequest = scanner.nextLine().trim();
-
             ServerConnection.getInstance().writeToServer(hosoRequest);
         }
     }
@@ -93,7 +92,7 @@ public class ClientApp {
                     //PS forwards request to send gadgets state
                     break;
                 case "304":
-                    recevieAllGadgets(commands);
+                    receiveAllGadgets(commands);
                     break;
                 case "316":
                     gadgetStateUpdate(commands);
@@ -124,7 +123,7 @@ public class ClientApp {
                 "SessionKey: " + sessionKey + "\n");
     }
 
-    private void recevieAllGadgets(String[] commands)throws Exception{
+    private void receiveAllGadgets(String[] commands)throws Exception{
         int nbrOfGadgets = Integer.parseInt(commands[1]);
         int count = 2;
         for (int i = 0; i < nbrOfGadgets; i++) {
@@ -158,7 +157,5 @@ public class ClientApp {
             }
             System.out.println("====================");
         }
-
-
     }
 }

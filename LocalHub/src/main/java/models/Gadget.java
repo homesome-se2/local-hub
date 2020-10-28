@@ -5,7 +5,7 @@ public abstract class Gadget {
     public final String alias;
     public final GadgetType type;
     private float state;
-    public String valueTemplate;
+    public String valueTemplate; //
     public long lastPollTime;
     public final long pollDelaySec;
     public boolean isPresent;
