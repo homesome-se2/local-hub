@@ -76,11 +76,8 @@ public class ClientApp {
         }
     }
 
-    private void outputToServer(String command) {
+    private synchronized void outputToServer(String command) {
         Scanner scanner = new Scanner(System.in);
-        //Log in directly (within 2 sec)
-
-
         while (!terminate) {
             String hosoRequest = scanner.nextLine().trim();
 
@@ -121,7 +118,18 @@ public class ClientApp {
 
     //==============================POLLING AND AUTOMATION HANDLING =========================
     private void pollGadgets() {
-        //TODO
+        while (!terminate) {
+            //TODO, check automations aswell, can be implemetned later
+
+            for (int key : gadgets.keySet()) {
+                long currentMillis = System.currentTimeMillis();
+
+                //Check if gadget needs polling
+                if (currentMillis - gadgets.get(key).lastPollTime > gadgets.get(key).pollDelaySec) {
+                    gadgets.get(key).poll();
+                }
+            }
+        }
     }
 
     //==============================PUBLIC SERVER ---> HUB ==================================

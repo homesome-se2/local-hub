@@ -18,7 +18,7 @@ public class GadgetBasic extends Gadget {
     @Override
     public void poll() {
         //TODO
-        // Implement
+        //Implement
         //Call method sendCommand
     }
 
