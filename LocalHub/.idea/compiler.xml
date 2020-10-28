@@ -6,8 +6,7 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="local-hub" />
-        <module name="LocalHubHomeSome" />
+        <module name="LocalHub" />
       </profile>
     </annotationProcessing>
   </component>

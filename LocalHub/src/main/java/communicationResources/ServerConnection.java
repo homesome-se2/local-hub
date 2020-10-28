@@ -18,7 +18,7 @@ public class ServerConnection {
     private final Object lockObject_output;
     private final Object lockObject_close;
 
-    //Singelton
+    //Singleton
     private static ServerConnection instance;
 
     public static ServerConnection getInstance() {

@@ -5,7 +5,7 @@ public abstract class Gadget {
     public final String alias;
     public final GadgetType type;
     private float state;
-    public String valueTemplate;
+    public String valueTemplate; //
     public long lastPollTime;
     public final long pollDelaySec;
     public boolean isPresent;
@@ -32,7 +32,7 @@ public abstract class Gadget {
     }
 
     // Request gadget's current state
-    public abstract void poll();
+    public abstract void poll() throws Exception;
 
     // Request gadget to alter state
     public abstract void alterState(float requestedState) throws Exception;
