@@ -8,7 +8,6 @@
     <artifactId>LocalHubHomeSome</artifactId>
     <version>1.0-SNAPSHOT</version>
 
-
     <dependencies>
         <!-- https://mvnrepository.com/artifact/javax.websocket/javax.websocket-client-api -->
         <dependency>

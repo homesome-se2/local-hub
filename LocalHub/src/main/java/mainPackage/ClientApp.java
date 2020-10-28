@@ -83,7 +83,6 @@ public class ClientApp {
 
         while (!terminate) {
             String hosoRequest = scanner.nextLine().trim();
-
             ServerConnection.getInstance().writeToServer(hosoRequest);
         }
     }
@@ -133,6 +132,20 @@ public class ClientApp {
     //302 Request of gadgets (newly logged in client)
     private void newClientRequestsGadgets() {
 
+    }
+
+
+    private void receiveAllGadgets(String[] commands) throws Exception {
+        int nbrOfGadgets = Integer.parseInt(commands[1]);
+        int count = 2;
+        for (int i = 0; i < nbrOfGadgets; i++) {
+            int gadgetID = Integer.parseInt(commands[count++]);
+            String alias = commands[count++];
+            GadgetType type = GadgetType.valueOf(commands[count++]);
+            String valueTemplate = commands[count++];
+            float state = Float.parseFloat(commands[count++]);
+            long pollDelaySeconds = Long.parseLong(commands[count++]);
+        }
     }
 
     //312 Alter gadget state
@@ -201,3 +214,4 @@ public class ClientApp {
     }
 
 }
+
