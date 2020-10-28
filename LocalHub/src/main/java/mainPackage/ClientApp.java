@@ -4,31 +4,37 @@ import communicationResources.ServerConnection;
 import models.Gadget;
 import models.GadgetBasic;
 import models.GadgetType;
+import models.Settings;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
+import java.io.File;
+import java.io.FileReader;
 import java.util.HashMap;
 import java.util.Scanner;
 
 public class ClientApp {
 
     private HashMap<Integer, Gadget> gadgets;
-    private Thread outputThread;
     private final Object lockObject_1;
     private volatile boolean terminate;
+    private Settings settings;
+    private Thread pollingThread;
+
+    //private static final String configFileJSON = "./config.json";  // When run as JAR on Linux
+    private static final String gadgetFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgets.json"); // When run from IDE
+    //Note: 'config.json' should be located "next to" the project folder: [config.json][PublicServer]
 
     public ClientApp() {
         this.gadgets = new HashMap<Integer, Gadget>();
         this.lockObject_1 = new Object();
         this.terminate = false;
-        this.outputThread = new Thread(new Runnable() {
+
+        this.pollingThread = new Thread(new Runnable() {
+            @Override
             public void run() {
-                try {
-                    outputToServer();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } finally {
-                    closeApp();
-                    System.out.println("\n\nOutput thread is now closed\n\n");
-                }
+                pollGadgets();
             }
         });
     }
@@ -38,17 +44,25 @@ public class ClientApp {
         try {
             //Print message
             System.out.println("\nWelcome to LocalHub\n");
-            //TODO
-            //-Read from json files
-            //-Setup Settings
 
-            //Start connection with server using websockets
+            //configure settings
+            configSettings();
+
+            //configure gadgets, automations, and groups
+            readGadgetFile();
+
+            //Start polling thread (handles automations aswell)
+            //TODO
+
+            //Start connection with server using websockets (if remote access)
             ServerConnection.getInstance().connectToServer();
-            //read clint input to send to server(outputThread)
-            outputThread.start();
-            //proccess inputs read from server
+
+            //Log in to ps (if remote access)
+            loginToPublicServer();
+
+            //Proccess inputs read from server
             inputFromServer();
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -62,11 +76,10 @@ public class ClientApp {
         }
     }
 
-    private void outputToServer() {
+    private void outputToServer(String command) {
         Scanner scanner = new Scanner(System.in);
         //Log in directly (within 2 sec)
-        String logIn = "101::Test::Test123";
-        ServerConnection.getInstance().writeToServer(logIn);
+
 
         while (!terminate) {
             String hosoRequest = scanner.nextLine().trim();
@@ -75,20 +88,21 @@ public class ClientApp {
     }
 
     private void inputFromServer() throws Exception {
+        //PS --> H
         while (!terminate) {
             String commandFromServer = ServerConnection.getInstance().incomingServerCommands.take();
             String[] commands = commandFromServer.split("::");
 
             switch (commands[0]) {
-                case "102":
-                    successfulManualLogin(commands);
-                    break;
                 case "121":
-                    //PS --> H login successful
+                    //H login successful
+                    loginSuccessful();
                     break;
                 case "302":
+                    //Request of gadgets (newly logged in client)
                     break;
                 case "312":
+<<<<<<< HEAD
                     //PS forwards request to send gadgets state
                     break;
                 case "304":
@@ -96,33 +110,41 @@ public class ClientApp {
                     break;
                 case "316":
                     gadgetStateUpdate(commands);
+=======
+                    //Request to alter gadget state
+>>>>>>> master
                     break;
                 case "371":
-                    //PS forwards request to get gadget groups
+                    //request to get gadget groups
                     break;
                 case "901":
                     System.out.println("ExceptionMessage: " + commands[1]);
                     break;
                 default:
-                    System.out.println("\n\n Unknown message from server \n\n");
+                    System.out.println("\n\nUnknown message from server \n\n");
                     break;
             }
         }
     }
 
-    private void successfulManualLogin(String[] commands)throws Exception{
-        String name = commands[1];
-        boolean admin = commands[2].equals("true");
-        String homeAlias = commands[3];
-        String sessionKey = commands[4];
 
-        System.out.println("LOGIN GOOD \n" +
-                "Name: " + name + "\n" +
-                "Admin: " + admin + "\n" +
-                "HomeAlias: " + homeAlias + "\n" +
-                "SessionKey: " + sessionKey + "\n");
+    //==============================POLLING AND AUTOMATION HANDLING =========================
+    private void pollGadgets() {
+        //TODO
     }
 
+    //==============================PUBLIC SERVER ---> HUB ==================================
+    //121 SuccessfulLogin
+    private void loginSuccessful() {
+        System.out.println("Login Successful");
+    }
+
+    //302 Request of gadgets (newly logged in client)
+    private void newClientRequestsGadgets() {
+
+    }
+
+<<<<<<< HEAD
     private void receiveAllGadgets(String[] commands)throws Exception{
         int nbrOfGadgets = Integer.parseInt(commands[1]);
         int count = 2;
@@ -133,29 +155,71 @@ public class ClientApp {
             String valueTemplate = commands[count++];
             float state = Float.parseFloat(commands[count++]);
             long pollDelaySeconds = Long.parseLong(commands[count++]);
+=======
+    //312 Alter gadget state
+    private void alterGadgetState() {
+    }
+>>>>>>> master
 
-            gadgets.put(gadgetID, new GadgetBasic(gadgetID, alias, type, valueTemplate, state, pollDelaySeconds));
+    //371 request of gadget Groups
+    private void requestOfGadgetGroups() {
+    }
+
+
+    //==============================HUB ---> PUBLIC SERVER ==================================
+    //120 Login
+    private void loginToPublicServer() {
+        ServerConnection.getInstance().writeToServer(settings.loginString());
+    }
+
+    //========================= FILE HANDLING ===============================================
+    private void readGadgetFile() throws Exception {
+        JSONParser parser = new JSONParser();
+
+        JSONArray array = (JSONArray) parser.parse(new FileReader(gadgetFileJSON));
+
+
+        for (Object object : array) {
+            JSONObject gadget = (JSONObject) object;
+            int id = Integer.valueOf((String) gadget.get("id"));
+            String alias = (String) gadget.get("alias");
+            GadgetType type = GadgetType.valueOf((String) gadget.get("type"));
+            String valueTemplate = (String) gadget.get("valueTemplate");
+            int state = Integer.valueOf((String) gadget.get("state"));
+            long pollDelaySeconds = Long.valueOf((String) gadget.get("pollDelaySec"));
+            int port = Integer.valueOf((String) gadget.get("port"));
+            String ip = (String) gadget.get("ip");
+
+            GadgetBasic gadgetBasic = new GadgetBasic(id, alias, type, valueTemplate, state, pollDelaySeconds, port, ip);
+            gadgets.put(id, gadgetBasic);
         }
-        printGadgets();
     }
 
-    private void gadgetStateUpdate(String[] commands)throws Exception{
-        int gadgetID = Integer.parseInt(commands[1]);
-        float newState = Float.parseFloat(commands[2]);
-
-        gadgets.get(gadgetID).setState(newState);
-
-        printGadgets();
+    private void configSettings() throws Exception {
+        this.settings = Settings.getInstance();
     }
 
-    private void printGadgets(){
-        if (!gadgets.isEmpty()){
+    private void readAutomationFile() {
+        //TODO
+    }
+
+    private void readGroupsFile() {
+        //TODO
+    }
+
+    private void readSettingsFile() {
+        //TODO
+    }
+
+    private void printGadgets() {
+        if (!gadgets.isEmpty()) {
             System.out.println("=== ALL GADGETS ===\n");
-            for(int key : gadgets.keySet()){
-                System.out.println("Alias: " + gadgets.get(key).alias +"\n" +
+            for (int key : gadgets.keySet()) {
+                System.out.println("Alias: " + gadgets.get(key).alias + "\n" +
                         "State: " + gadgets.get(key).getState());
             }
             System.out.println("====================");
         }
     }
+
 }

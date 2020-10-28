@@ -8,14 +8,14 @@ public class GadgetBasic extends Gadget {
     private BufferedReader input;
     private BufferedWriter output;
     private Socket socket;
-    private int port;
-    private String IP;
     private String request;
 
     /**
      * Class representing interface to native HomeSome hardware (physical) com.homesome.model of all GadgetTypes.
      * The com.homesome.model interacted with via this class are commonly built upon Arduino based WiFi-modules.
      */
+    private int port;
+    private String ip;
 
     public GadgetBasic(int gadgetID, String alias, GadgetType type, String valueTemplate, float state, long pollDelaySeconds) {
         super(gadgetID, alias, type, valueTemplate, state, pollDelaySeconds);
@@ -28,7 +28,7 @@ public class GadgetBasic extends Gadget {
         this.input = input;
         this.output = output;
         this.port = port;
-        this.IP = IP;
+        this.ip = IP;
         this.request = request;
 
         socket = new Socket();
@@ -38,26 +38,31 @@ public class GadgetBasic extends Gadget {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
 
     @Override
-    public void poll() {
+    public void poll(){
         //TODO
         // Implement
-
 
     }
 
     @Override
     public void alterState(float requestedState) throws Exception {
         //TODO
-        // Implement
+        //Implement
+        //Call method sendCommand
+        //Forwards reqState to sendCommand that sends to gadget
     }
 
     @Override
-    protected String sendCommand(String command) throws Exception {
+    protected String sendCommand(String command) throw IOException {
         //TODO
-        // This method communicated with gadgets
+            //Implement
+            //Here we can have the socket implementation we get back
+            //This communicates with a gadget
+            //1 send req
+            //2 get req
+            //call setState if state has changed
         try {
             InetSocketAddress inetSocketAddress = new InetSocketAddress(IP,port);
             socket.connect(inetSocketAddress);
@@ -70,6 +75,7 @@ public class GadgetBasic extends Gadget {
             output.close();
         }
         return input.readLine();
+
     }
 
     @Override
