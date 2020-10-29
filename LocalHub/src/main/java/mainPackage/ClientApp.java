@@ -18,7 +18,7 @@ public class ClientApp {
 
     private HashMap<Integer, Gadget> gadgets;
     private final Object lockObject_1;
-    private volatile boolean terminate;
+    public volatile boolean terminate;
     private Settings settings;
     private Thread pollingThread;
 
@@ -26,7 +26,16 @@ public class ClientApp {
     private static final String gadgetFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgets.json"); // When run from IDE
     //Note: 'config.json' should be located "next to" the project folder: [config.json][PublicServer]
 
-    public ClientApp() {
+    private static ClientApp instance = null;
+
+    public static ClientApp getInstance(){
+        if (instance==null){
+            instance = new ClientApp();
+        }
+        return instance;
+    }
+
+    private ClientApp() {
         this.gadgets = new HashMap<Integer, Gadget>();
         this.lockObject_1 = new Object();
         this.terminate = false;
@@ -39,7 +48,6 @@ public class ClientApp {
         });
     }
 
-
     public void startHub() {
         try {
             //Print message
@@ -50,15 +58,16 @@ public class ClientApp {
 
             //configure gadgets, automations, and groups
             readGadgetFile();
+            //TODO read automations
+            //TODO read groups
 
             //Start polling thread (handles automations aswell)
-            //TODO
+            pollingThread.start();
 
-            //Start connection with server using websockets (if remote access)
-            ServerConnection.getInstance().connectToServer();
-
-            //Log in to ps (if remote access)
-            loginToPublicServer();
+            //Start connection with server using websockets (if remote access) Login happens here aswell
+            if (settings.isRemoteAccessEnabled()){
+                ServerConnection.getInstance().connectToServer(settings.loginString());
+            }
 
             //Proccess inputs read from server
             inputFromServer();
@@ -100,6 +109,7 @@ public class ClientApp {
                     break;
                 case "312":
                     //Request to alter gadget state
+                    alterGadgetState(commands[1],commands[2]);
                     break;
                 case "371":
                     //request to get gadget groups
@@ -119,13 +129,19 @@ public class ClientApp {
     private void pollGadgets() {
         while (!terminate) {
             //TODO, check automations aswell, can be implemetned later
+            //TODO set last poll time when the gadget has been polled.
 
             for (int key : gadgets.keySet()) {
                 long currentMillis = System.currentTimeMillis();
 
                 //Check if gadget needs polling
                 if (currentMillis - gadgets.get(key).lastPollTime > gadgets.get(key).pollDelaySec) {
-                    gadgets.get(key).poll();
+                    try {
+                        gadgets.get(key).poll();
+                    } catch (Exception e) {
+                        //If not connecting to gadget, set present to false.
+                        e.printStackTrace();
+                    }
                 }
             }
         }
@@ -135,48 +151,35 @@ public class ClientApp {
     //121 SuccessfulLogin
     private void loginSuccessful() {
         System.out.println("Login Successful");
+        ServerConnection.getInstance().loggedInToServer = true;
     }
 
     //302 Request of gadgets (newly logged in client)
     private void newClientRequestsGadgets() {
-
-    }
-
-
-    private void receiveAllGadgets(String[] commands) throws Exception {
-        int nbrOfGadgets = Integer.parseInt(commands[1]);
-        int count = 2;
-        for (int i = 0; i < nbrOfGadgets; i++) {
-            int gadgetID = Integer.parseInt(commands[count++]);
-            String alias = commands[count++];
-            GadgetType type = GadgetType.valueOf(commands[count++]);
-            String valueTemplate = commands[count++];
-            float state = Float.parseFloat(commands[count++]);
-            long pollDelaySeconds = Long.parseLong(commands[count++]);
-        }
+        //TODO
     }
 
     //312 Alter gadget state
-    private void alterGadgetState() {
+    private void alterGadgetState(String gadgetID, String newState) throws Exception {
+        //TODO Synchronise gadgetList??
+        for (int key : gadgets.keySet()){
+            if (gadgets.get(key).id == Integer.parseInt(gadgetID)){
+                gadgets.get(key).alterState(Float.parseFloat(newState));
+            }
+        }
     }
 
     //371 request of gadget Groups
     private void requestOfGadgetGroups() {
+        //TODO
     }
-
 
     //==============================HUB ---> PUBLIC SERVER ==================================
-    //120 Login
-    private void loginToPublicServer() {
-        ServerConnection.getInstance().writeToServer(settings.loginString());
-    }
 
     //========================= FILE HANDLING ===============================================
     private void readGadgetFile() throws Exception {
         JSONParser parser = new JSONParser();
-
         JSONArray array = (JSONArray) parser.parse(new FileReader(gadgetFileJSON));
-
 
         for (Object object : array) {
             JSONObject gadget = (JSONObject) object;
@@ -184,12 +187,11 @@ public class ClientApp {
             String alias = (String) gadget.get("alias");
             GadgetType type = GadgetType.valueOf((String) gadget.get("type"));
             String valueTemplate = (String) gadget.get("valueTemplate");
-            int state = Integer.valueOf((String) gadget.get("state"));
             long pollDelaySeconds = Long.valueOf((String) gadget.get("pollDelaySec"));
             int port = Integer.valueOf((String) gadget.get("port"));
             String ip = (String) gadget.get("ip");
 
-            GadgetBasic gadgetBasic = new GadgetBasic(id, alias, type, valueTemplate, state, pollDelaySeconds, port, ip);
+            GadgetBasic gadgetBasic = new GadgetBasic(id, alias, type, valueTemplate, -1, pollDelaySeconds, port, ip);
             gadgets.put(id, gadgetBasic);
         }
     }
@@ -220,6 +222,5 @@ public class ClientApp {
             System.out.println("====================");
         }
     }
-
 }
 

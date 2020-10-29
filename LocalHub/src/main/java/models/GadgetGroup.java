@@ -3,8 +3,8 @@ package models;
 public class GadgetGroup {
     //TODO
     //Create groups.json and read into groupsList in ClientApp
-    String name;
-    int[] gadgets;
+    private String name;
+    private int[] gadgets;
 
     public GadgetGroup(String name, int[] gadgets){
         this.name = name;
