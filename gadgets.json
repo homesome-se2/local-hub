@@ -2,19 +2,12 @@
   {
     "id": "0",
     "alias": "Kitchen Lamp",
+    "enable" : "true",
     "type": "SWITCH",
     "valueTemplate": "default",
-    "pollDelaySec": "60",
-    "port": "8080",
-    "ip": "192.168.1.103"
-  },
-  {
-    "id": "1",
-    "alias": "Bedroom Lamp",
-    "type": "SWITCH",
-    "valueTemplate": "default",
-    "pollDelaySec": "60",
-    "port": "8081",
-    "ip": "192.168.1.103"
+    "requestSpec" : "null",
+    "pollDelaySec": "5",
+    "port": "8085",
+    "ip": "192.168.1.4"
   }
 ]
