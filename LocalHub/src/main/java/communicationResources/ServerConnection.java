@@ -42,6 +42,17 @@ public class ServerConnection {
         this.lockObject_close = new Object();
         this.connectedToServer = false;
         this.session = null;
+        this.manageConnThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    manageConnection();
+                } catch (Exception e) {
+                    System.out.println("Serverconnection management lost..");
+                }
+
+            }
+        });
     }
 
     public void connectToServer(String loginRequest) {
@@ -77,8 +88,7 @@ public class ServerConnection {
         connectedToServer = true;
         System.out.println("Connected To Server");
 
-
-        if (!manageConnThread.isAlive()){
+        if (!manageConnThread.isAlive()) {
             manageConnThread.start();
         }
 
@@ -115,12 +125,11 @@ public class ServerConnection {
         }
     }
 
-    private void manageConnection() throws Exception{
-        long pingIntervall = 45 *1000;
-        while (!ClientApp.getInstance().terminate){
-            //TODO
+    private void manageConnection() throws Exception {
+        long pingIntervall = 45 * 1000;
+        while (!ClientApp.getInstance().terminate) {
             Thread.sleep(pingIntervall);
-            if (loggedInToServer){
+            if (loggedInToServer) {
                 writeToServer("ping");
             } else {
                 connectToServer(loginRequest);
