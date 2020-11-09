@@ -4,13 +4,12 @@ package models;
 //class represents a simple automation object of when the masterGadget reaches a
 //certain state, a slaveGadget changes to the set state
 public class Automation {
-
     private int masterId;
     private int slaveId;
     private float masterState;
     private float slaveState;
 
-    public Automation(int masterId, int slaveId, float masterState, float slaveState){
+    public Automation(int masterId, int slaveId, float masterState, float slaveState) {
         this.masterId = masterId;
         this.slaveId = slaveId;
         this.masterState = masterState;
@@ -48,5 +47,4 @@ public class Automation {
     public void setSlaveState(float slaveState) {
         this.slaveState = slaveState;
     }
-
 }

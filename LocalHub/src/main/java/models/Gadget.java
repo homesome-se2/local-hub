@@ -50,6 +50,11 @@ public abstract class Gadget {
         }
     }
 
+    // Set last poll time when polling successed
+    public void setLastPollTime(long lastPollTime) {
+        this.lastPollTime = lastPollTime;
+    }
+
     public float getState() {
         return state;
     }
