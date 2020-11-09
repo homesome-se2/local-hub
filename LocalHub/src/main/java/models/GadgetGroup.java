@@ -1,14 +1,16 @@
 package models;
 
+import java.util.List;
+
 public class GadgetGroup {
     //TODO
     //Create groups.json and read into groupsList in ClientApp
     String name;
-    int[] gadgets;
+    List<Integer> gadget;
 
-    public GadgetGroup(String name, int[] gadgets){
+    public GadgetGroup(String name, List<Integer> gadget) {
         this.name = name;
-        this.gadgets = gadgets;
+        this.gadget = gadget;
     }
 
     public String getName() {
@@ -19,11 +21,13 @@ public class GadgetGroup {
         this.name = name;
     }
 
-    public int[] getGadgets() {
-        return gadgets;
+    public List<Integer> getGadget() {
+        return gadget;
     }
 
-    public void setGadgets(int[] gadgets) {
-        this.gadgets = gadgets;
+    public void setGadget(List<Integer> gadget) {
+        this.gadget = gadget;
     }
 }
+
+//

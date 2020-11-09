@@ -23,7 +23,6 @@ public class GadgetBasic extends Gadget {
         this.ip = ip;
     }
 
-
     public GadgetBasic(int gadgetID, String alias, GadgetType type, String valueTemplate, float state, long pollDelaySeconds, BufferedReader input, BufferedWriter output, int port, String IP, String request) throws IOException {
         super(gadgetID, alias, type, valueTemplate, state, pollDelaySeconds);
         this.input = input;
@@ -32,8 +31,8 @@ public class GadgetBasic extends Gadget {
         this.ip = IP;
         this.request = request;
 
-            input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+        input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 
     }
 
@@ -74,7 +73,7 @@ public class GadgetBasic extends Gadget {
             //Compare old state to the new state
             //if not same, the gadget is updated
             //we send out to client
-            
+
             String newState = input.readLine();
             if (!newState.equalsIgnoreCase(String.valueOf(getState()))){
                 setState(Float.parseFloat(newState));
