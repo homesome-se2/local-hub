@@ -29,7 +29,7 @@ public class GadgetBasic extends Gadget {
     @Override
     public void poll() {
         try {
-            String response = sendCommand("341");
+            String response = sendCommand("341::" + requestSpec);
 
             String splittedResponse[] = response.split("::");
             //if state changed
@@ -49,7 +49,7 @@ public class GadgetBasic extends Gadget {
     public void alterState(float requestedState) {
         try {
             System.out.println("Alter state of gadget: " + this.id);
-            String response = sendCommand("313::" + requestedState);
+            String response = sendCommand("313::" + requestedState + "::" + requestSpec);
 
             String splittedResponse[] = response.split("::");
             //if state changed
