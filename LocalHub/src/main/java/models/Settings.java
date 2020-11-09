@@ -10,6 +10,7 @@ import java.io.IOException;
 
 public class Settings {
     private final String settingsFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/settings.json");
+    private boolean remoteAccessEnabled;
     private int remoteID;
     private String remotePassword;
     private String alias;
@@ -32,6 +33,7 @@ public class Settings {
         JSONParser parser = new JSONParser();
 
         JSONObject object = (JSONObject) parser.parse(new FileReader(settingsFileJSON));
+        this.remoteAccessEnabled = Boolean.valueOf((String) object.get("remoteAccessEnable"));
         this.remoteID = Integer.valueOf((String) object.get("remoteID"));
         this.remotePassword = (String) object.get("remotePassword");
         this.alias = (String) object.get("alias");
@@ -51,6 +53,10 @@ public class Settings {
 
     public String getAlias() {
         return alias;
+    }
+
+    public boolean isRemoteAccessEnabled() {
+        return remoteAccessEnabled;
     }
 
     @Override

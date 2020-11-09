@@ -1,5 +1,7 @@
 package communicationResources;
 
+import mainPackage.ClientApp;
+
 import javax.websocket.ContainerProvider;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
@@ -14,6 +16,12 @@ public class ServerConnection {
     //An instance representing the communication between the client and server
     private Session session;
     private volatile boolean connectedToServer;
+    public volatile boolean loggedInToServer;
+    private String loginRequest;
+
+
+    //Manage session, ping and reconnect to public server
+    private Thread manageConnThread;
 
     private final Object lockObject_output;
     private final Object lockObject_close;
@@ -34,9 +42,21 @@ public class ServerConnection {
         this.lockObject_close = new Object();
         this.connectedToServer = false;
         this.session = null;
+        this.manageConnThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    manageConnection();
+                } catch (Exception e) {
+                    System.out.println("Serverconnection management lost..");
+                }
+
+            }
+        });
     }
 
-    public void connectToServer() {
+    public void connectToServer(String loginRequest) {
+        this.loginRequest = loginRequest;
         try {
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
             String uri = "ws://134.209.198.123:8084/homesome";
@@ -50,6 +70,8 @@ public class ServerConnection {
         synchronized (lockObject_close) {
             if (connectedToServer) {
                 connectedToServer = false;
+                loggedInToServer = false;
+                manageConnThread.interrupt();
                 try {
                     if (session.isOpen()) {
                         session.close();
@@ -65,23 +87,30 @@ public class ServerConnection {
         this.session = session;
         connectedToServer = true;
         System.out.println("Connected To Server");
+
+        if (!manageConnThread.isAlive()) {
+            manageConnThread.start();
+        }
+
+        writeToServer(loginRequest);
     }
 
     public void onServerClose() {
         connectedToServer = false;
-        System.out.println("Closed Server Connection");
+        loggedInToServer = false;
+        System.out.println("Closed Server Connection, attempting to reconnect in 45 sec..");
     }
 
-    public void writeToServer(String msg){
-        synchronized (lockObject_output){
+    public void writeToServer(String msg) {
+        synchronized (lockObject_output) {
             System.out.println("\n\nMessage to server: " + msg + "\n\n");
-            try{
-                if (connectedToServer && session.isOpen()){
+            try {
+                if (connectedToServer && session.isOpen()) {
                     session.getBasicRemote().sendText(msg);
-                }else {
+                } else {
                     System.out.println("Not Connected To Server");
                 }
-            }catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -93,6 +122,18 @@ public class ServerConnection {
             incomingServerCommands.put(msg);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void manageConnection() throws Exception {
+        long pingIntervall = 45 * 1000;
+        while (!ClientApp.getInstance().terminate) {
+            Thread.sleep(pingIntervall);
+            if (loggedInToServer) {
+                writeToServer("ping");
+            } else {
+                connectToServer(loginRequest);
+            }
         }
     }
 }

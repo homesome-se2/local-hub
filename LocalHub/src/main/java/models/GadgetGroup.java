@@ -5,10 +5,11 @@ import java.util.List;
 public class GadgetGroup {
     //TODO
     //Create groups.json and read into groupsList in ClientApp
-    String name;
-    List<Integer> gadget;
 
-    public GadgetGroup(String name, List<Integer> gadget) {
+    String name;
+    private int[] gadget;
+
+    public GadgetGroup(String name, int[] gadget) {
         this.name = name;
         this.gadget = gadget;
     }
@@ -21,11 +22,11 @@ public class GadgetGroup {
         this.name = name;
     }
 
-    public List<Integer> getGadget() {
+    public int[] getGadget() {
         return gadget;
     }
 
-    public void setGadget(List<Integer> gadget) {
+    public void setGadget(int[] gadget) {
         this.gadget = gadget;
     }
 }
