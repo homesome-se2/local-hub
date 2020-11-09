@@ -1,10 +1,7 @@
 package mainPackage;
 
 import communicationResources.ServerConnection;
-import models.Gadget;
-import models.GadgetBasic;
-import models.GadgetType;
-import models.Settings;
+import models.*;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -211,8 +208,22 @@ public class ClientApp {
         this.settings = Settings.getInstance();
     }
 
-    private void readAutomationFile() {
+    private void readAutomationFile() throws Exception {
         //TODO
+        JSONParser parser = new JSONParser();
+
+        JSONArray array = (JSONArray) parser.parse(new FileReader(gadgetFileJSON));
+
+
+        for (Object object : array) {
+            JSONObject automations = (JSONObject) object;
+            int masterId = Integer.valueOf((String) automations.get("masterId"));
+            int slaveId = Integer.valueOf((String) automations.get("slaveId"));
+            float masterState = Float.valueOf((String) automations.get("masterState"));
+            float slaveState = Float.valueOf((String) automations.get("slaveState"));
+
+            Automation automation = new Automation(masterId, slaveId, masterState, slaveState);
+        }
     }
 
     private void readGroupsFile() {
