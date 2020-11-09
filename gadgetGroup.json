@@ -1,0 +1,10 @@
+[
+  {
+    "groupName": "Kitchen Lamp",
+    "groupID" : [0,1]
+  },
+  {
+    "groupName": "bathroom",
+    "groupID" : [1,2,3]
+  }
+]
