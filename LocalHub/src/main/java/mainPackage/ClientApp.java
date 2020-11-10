@@ -218,10 +218,10 @@ public class ClientApp {
 
         for (Object object : array) {
             JSONObject automations = (JSONObject) object;
-            int masterId = Integer.valueOf((String) automations.get("masterId"));
-            int slaveId = Integer.valueOf((String) automations.get("slaveId"));
-            float masterState = Float.valueOf((String) automations.get("masterState"));
-            float slaveState = Float.valueOf((String) automations.get("slaveState"));
+            int masterId = Integer.parseInt((String) automations.get("masterId"));
+            int slaveId = Integer.parseInt((String) automations.get("slaveId"));
+            float masterState = Float.parseFloat((String) automations.get("masterState"));
+            float slaveState = Float.parseFloat((String) automations.get("slaveState"));
 
             Automation automation = new Automation(masterId, slaveId, masterState, slaveState);
         }
