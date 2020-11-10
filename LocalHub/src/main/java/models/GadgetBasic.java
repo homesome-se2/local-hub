@@ -19,7 +19,7 @@ public class GadgetBasic extends Gadget {
      * The com.homesome.model interacted with via this class are commonly built upon Arduino based WiFi-modules.
      */
 
-    public GadgetBasic(int gadgetID, String alias, GadgetType type, String valueTemplate,String requestSpec, float state, long pollDelaySeconds, int port, String ip) {
+    public GadgetBasic(int gadgetID, String alias, GadgetType type, String valueTemplate, String requestSpec, float state, long pollDelaySeconds, int port, String ip) {
         super(gadgetID, alias, type, valueTemplate, state, pollDelaySeconds);
         this.port = port;
         this.ip = ip;
@@ -28,7 +28,7 @@ public class GadgetBasic extends Gadget {
     @Override
     public void poll() {
         try {
-            String response = sendCommand("{\"command\":341,\"requestSpec\":" + requestSpec + "}");
+            String response = sendCommand("{\"command\":341,\"requestSpec\":\"" + requestSpec + "\"}");
 
             String splittedResponse[] = response.split("::");
             //if state changed
@@ -48,7 +48,7 @@ public class GadgetBasic extends Gadget {
     public void alterState(float requestedState) {
         try {
             System.out.println("Alter state of gadget: " + this.id);
-            String response = sendCommand("{\"command\":313,\"requestSpec\":" + requestSpec +",\"requestedState\":" + requestedState +"}");
+            String response = sendCommand("{\"command\":313,\"requestSpec\":" + "\"" + requestSpec + "\",\"requestedState\":" + requestedState + "}");
 
             String splittedResponse[] = response.split("::");
             //if state changed
