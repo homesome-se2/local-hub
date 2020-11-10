@@ -105,7 +105,7 @@ public class ClientApp {
                     break;
                 case "302":
                     //Request of gadgets (newly logged in client)
-                    newClientRequestsGadgets();
+                    newClientRequestsGadgets(commands[1]);
                     break;
                 case "312":
                     //Request to alter gadget state
@@ -170,14 +170,16 @@ public class ClientApp {
     }
 
     //302 Request of gadgets (newly logged in client)
-    private void newClientRequestsGadgets() {
+    private void newClientRequestsGadgets(String cSessionID) {
         StringBuilder msgToServer = new StringBuilder();
+        int counter = 0;
         for (int i = 0; i < gadgets.size(); i++) {
             if (gadgets.get(i).isPresent) {
                 msgToServer.append(gadgets.get(i).toHoSoProtocol()).append("::");
+                counter++;
             }
         }
-        ServerConnection.getInstance().writeToServer("303::" + msgToServer);
+        ServerConnection.getInstance().writeToServer("303::" + cSessionID + "::" + counter +"::" + msgToServer);
     }
 
     //312 Alter gadget state
