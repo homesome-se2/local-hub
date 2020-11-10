@@ -18,7 +18,7 @@ public abstract class Gadget {
         this.valueTemplate = valueTemplate;
         state = -1;
         pollDelaySec = pollDelaySeconds;
-        isPresent = true;
+        isPresent = false;
     }
 
     public Gadget(int gadgetID, String alias, GadgetType type, String valueTemplate, float state, long pollDelaySeconds) {
@@ -28,7 +28,7 @@ public abstract class Gadget {
         this.valueTemplate = valueTemplate;
         this.state = state;
         pollDelaySec = pollDelaySeconds;
-        isPresent = true;
+        isPresent = false;
     }
 
     // Request gadget's current state
