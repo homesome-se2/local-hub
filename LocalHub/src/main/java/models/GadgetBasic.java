@@ -72,17 +72,27 @@ public class GadgetBasic extends Gadget {
             this.output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 
             //Write to gadget
-            this.output.write(command.concat("\n"));
+            this.output.write(encryptDecrypt(command.concat("\n")));
             this.output.flush();
 
             //return the response from gadget
-            return input.readLine();
+            return encryptDecrypt(input.readLine());
         } catch (Exception e) {
             return null;
         } finally {
             this.output.close();
             this.output.close();
         }
+    }
+
+    private String encryptDecrypt(String input) {
+
+        char[] key = {'A', 'K', 'M'};
+        StringBuilder output = new StringBuilder();
+        for(int i = 0 ; i < input.length() ; i++) {
+            output.append((char)(input.charAt(i) ^ key[i % key.length]));
+        }
+        return output.toString();
     }
 
     private void checkStateChange(String newState) {
