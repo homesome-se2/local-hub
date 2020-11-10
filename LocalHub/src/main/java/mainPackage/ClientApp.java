@@ -22,6 +22,7 @@ public class ClientApp {
 
     //private static final String configFileJSON = "./config.json";  // When run as JAR on Linux
     private static final String gadgetFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgets.json"); // When run from IDE
+    private static final String automationFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/automations.json"); // When run from IDE
     //Note: 'config.json' should be located "next to" the project folder: [config.json][PublicServer]
 
     private static ClientApp instance = null;
@@ -98,6 +99,7 @@ public class ClientApp {
                     break;
                 case "302":
                     //Request of gadgets (newly logged in client)
+                    newClientRequestsGadgets();
                     break;
                 case "312":
                     //Request to alter gadget state
@@ -163,7 +165,13 @@ public class ClientApp {
 
     //302 Request of gadgets (newly logged in client)
     private void newClientRequestsGadgets() {
-        //TODO
+        StringBuilder msgToServer = new StringBuilder();
+        for (int i = 0; i < gadgets.size(); i++) {
+            if (gadgets.get(i).isPresent) {
+                msgToServer.append(gadgets.get(i).toHoSoProtocol()).append("::");
+            }
+        }
+        ServerConnection.getInstance().writeToServer("303::" + msgToServer);
     }
 
     //312 Alter gadget state
@@ -212,15 +220,15 @@ public class ClientApp {
         //TODO
         JSONParser parser = new JSONParser();
 
-        JSONArray array = (JSONArray) parser.parse(new FileReader(gadgetFileJSON));
+        JSONArray array = (JSONArray) parser.parse(new FileReader(automationFileJSON));
 
 
         for (Object object : array) {
             JSONObject automations = (JSONObject) object;
-            int masterId = Integer.valueOf((String) automations.get("masterId"));
-            int slaveId = Integer.valueOf((String) automations.get("slaveId"));
-            float masterState = Float.valueOf((String) automations.get("masterState"));
-            float slaveState = Float.valueOf((String) automations.get("slaveState"));
+            int masterId = Integer.parseInt((String) automations.get("masterId"));
+            int slaveId = Integer.parseInt((String) automations.get("slaveId"));
+            float masterState = Float.parseFloat((String) automations.get("masterState"));
+            float slaveState = Float.parseFloat((String) automations.get("slaveState"));
 
             Automation automation = new Automation(masterId, slaveId, masterState, slaveState);
         }
