@@ -8,6 +8,6 @@
     "requestSpec" : "null",
     "pollDelaySec": "5",
     "port": "8085",
-    "ip": "192.168.1.4"
+    "ip": "192.168.43.216"
   }
 ]
