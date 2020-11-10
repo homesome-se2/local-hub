@@ -22,6 +22,7 @@ public class ClientApp {
 
     //private static final String configFileJSON = "./config.json";  // When run as JAR on Linux
     private static final String gadgetFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgets.json"); // When run from IDE
+    private static final String automationFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/automations.json"); // When run from IDE
     //Note: 'config.json' should be located "next to" the project folder: [config.json][PublicServer]
 
     private static ClientApp instance = null;
@@ -212,7 +213,7 @@ public class ClientApp {
         //TODO
         JSONParser parser = new JSONParser();
 
-        JSONArray array = (JSONArray) parser.parse(new FileReader(gadgetFileJSON));
+        JSONArray array = (JSONArray) parser.parse(new FileReader(automationFileJSON));
 
 
         for (Object object : array) {
