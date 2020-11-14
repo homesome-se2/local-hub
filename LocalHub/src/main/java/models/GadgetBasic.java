@@ -85,9 +85,9 @@ public class GadgetBasic extends Gadget {
         }
     }
 
-    private String encryptDecrypt(String input) {
-
-        char[] key = {'A', 'K', 'M'};
+    //This method will encrypt and decrypt
+    private static String encryptDecrypt(String input) {
+        char[] key = {'A', 'K', 'M','F','S'};
         StringBuilder output = new StringBuilder();
         for(int i = 0 ; i < input.length() ; i++) {
             output.append((char)(input.charAt(i) ^ key[i % key.length]));
