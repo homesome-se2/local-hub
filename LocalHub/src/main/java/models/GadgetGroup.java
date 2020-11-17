@@ -29,4 +29,13 @@ public class GadgetGroup {
     public void setGadgets(int[] gadgets) {
         this.gadgets = gadgets;
     }
+
+    public String toHosoArrayFormat(){
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("::" + this.groupName);
+        for (int i : this.gadgets){
+            stringBuilder.append(":" + i);
+        }
+        return stringBuilder.toString();
+    }
 }
