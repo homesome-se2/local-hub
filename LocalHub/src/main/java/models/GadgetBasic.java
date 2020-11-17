@@ -19,17 +19,16 @@ public class GadgetBasic extends Gadget {
      * The com.homesome.model interacted with via this class are commonly built upon Arduino based WiFi-modules.
      */
 
-    public GadgetBasic(int gadgetID, String alias, GadgetType type, String valueTemplate,String requestSpec, float state, long pollDelaySeconds, int port, String ip) {
+    public GadgetBasic(int gadgetID, String alias, GadgetType type, String valueTemplate, String requestSpec, float state, long pollDelaySeconds, int port, String ip) {
         super(gadgetID, alias, type, valueTemplate, state, pollDelaySeconds);
         this.port = port;
         this.ip = ip;
         this.requestSpec = requestSpec;
     }
-
     @Override
     public void poll() {
         try {
-            String response = sendCommand("{\"command\":341,\"requestSpec\":" + requestSpec + "}");
+            String response = sendCommand("{\"command\":341,\"requestSpec\":\"" + requestSpec + "\"}");
 
             String splittedResponse[] = response.split("::");
             //if state changed
@@ -49,7 +48,7 @@ public class GadgetBasic extends Gadget {
     public void alterState(float requestedState) {
         try {
             System.out.println("Alter state of gadget: " + this.id);
-            String response = sendCommand("{\"command\":313,\"requestSpec\":" + requestSpec +",\"requestedState\":" + requestedState +"}");
+            String response = sendCommand("{\"command\":313,\"requestSpec\":" + "\"" + requestSpec + "\",\"requestedState\":" + requestedState + "}");
 
             String splittedResponse[] = response.split("::");
             //if state changed
@@ -64,6 +63,7 @@ public class GadgetBasic extends Gadget {
     @Override
     protected String sendCommand(String command) throws IOException {
         try {
+
             this.socket = new Socket();
             this.socket.connect(new InetSocketAddress(this.ip, this.port), 1500);
             //set a timeOut on read
@@ -72,17 +72,27 @@ public class GadgetBasic extends Gadget {
             this.output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 
             //Write to gadget
-            this.output.write(command.concat("\n"));
+            this.output.write(encryptDecrypt(command.concat("\n")));
             this.output.flush();
 
             //return the response from gadget
-            return input.readLine();
+            return encryptDecrypt(input.readLine());
         } catch (Exception e) {
             return null;
         } finally {
             this.output.close();
             this.output.close();
         }
+    }
+
+    //This method will encrypt and decrypt
+    private static String encryptDecrypt(String input) {
+        char[] key = {'A', 'K', 'M','F','S'};
+        StringBuilder output = new StringBuilder();
+        for(int i = 0 ; i < input.length() ; i++) {
+            output.append((char)(input.charAt(i) ^ key[i % key.length]));
+        }
+        return output.toString();
     }
 
     private void checkStateChange(String newState) {

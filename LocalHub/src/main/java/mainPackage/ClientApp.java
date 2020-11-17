@@ -1,19 +1,23 @@
 package mainPackage;
 
+import com.google.gson.Gson;
 import communicationResources.ServerConnection;
 import models.*;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.util.HashMap;
-import java.util.Scanner;
+import java.io.IOException;
+import java.util.*;
 
 public class ClientApp {
 
     private HashMap<Integer, Gadget> gadgets;
+    private HashMap<Integer, GadgetGroup> gadgetGroup;
     private final Object lockObject_1;
     public volatile boolean terminate;
     private Settings settings;
@@ -24,6 +28,8 @@ public class ClientApp {
     private static final String gadgetFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgets.json"); // When run from IDE
     private static final String automationFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/automations.json"); // When run from IDE
     //Note: 'config.json' should be located "next to" the project folder: [config.json][PublicServer]
+
+    private static final String gadgetGroupFile = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgetGroup.json");
 
     private static ClientApp instance = null;
 
@@ -198,14 +204,15 @@ public class ClientApp {
 
         for (Object object : array) {
             JSONObject gadget = (JSONObject) object;
+
             if (gadget.get("enable").equals("true")) {
-                int id = Integer.valueOf((String) gadget.get("id"));
+                int id = Integer.parseInt((String) gadget.get("id"));
                 String alias = (String) gadget.get("alias");
                 GadgetType type = GadgetType.valueOf((String) gadget.get("type"));
                 String valueTemplate = (String) gadget.get("valueTemplate");
                 String requestSpec = (String) gadget.get("requestSpec");
-                long pollDelaySeconds = Long.valueOf((String) gadget.get("pollDelaySec"));
-                int port = Integer.valueOf((String) gadget.get("port"));
+                long pollDelaySeconds = Long.parseLong((String) gadget.get("pollDelaySec"));
+                int port = Integer.parseInt((String) gadget.get("port"));
                 String ip = (String) gadget.get("ip");
 
                 GadgetBasic gadgetBasic = new GadgetBasic(id, alias, type, valueTemplate, requestSpec, -1, pollDelaySeconds, port, ip);
@@ -233,6 +240,15 @@ public class ClientApp {
             float slaveState = Float.parseFloat((String) automations.get("slaveState"));
 
             Automation automation = new Automation(masterId, slaveId, masterState, slaveState);
+        }
+    }
+
+    private void readGadgetGroupsFile() throws Exception {
+        try (FileReader fileReader = new FileReader(gadgetGroupFile)) {
+            GadgetGroup[] gadgetGroups = new Gson().fromJson(gadgetGroupFile, GadgetGroup[].class);
+            System.out.println(Arrays.toString(gadgetGroups));
+        }catch (IOException e) {
+            throw new Exception("Unable to read the GadgetGroup json file");
         }
     }
 
