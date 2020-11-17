@@ -6,29 +6,27 @@ public class GadgetGroup {
     //TODO
     //Create groups.json and read into groupsList in ClientApp
 
-    String name;
-    private int[] gadget;
+    public String groupName;
+    private int[] gadgets;
 
-    public GadgetGroup(String name, int[] gadget) {
-        this.name = name;
-        this.gadget = gadget;
+    public GadgetGroup(String groupName, int[] gadget) {
+        this.groupName = groupName;
+        this.gadgets = gadget;
     }
 
-    public String getName() {
-        return name;
+    public String getGroupName() {
+        return groupName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
     }
 
-    public int[] getGadget() {
-        return gadget;
+    public int[] getGadgets() {
+        return gadgets;
     }
 
-    public void setGadget(int[] gadget) {
-        this.gadget = gadget;
+    public void setGadgets(int[] gadgets) {
+        this.gadgets = gadgets;
     }
 }
-
-//

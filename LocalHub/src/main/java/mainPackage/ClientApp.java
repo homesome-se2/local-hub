@@ -1,6 +1,7 @@
 package mainPackage;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import communicationResources.ServerConnection;
 import models.*;
 import org.json.simple.JSONArray;
@@ -12,12 +13,13 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.*;
 
 public class ClientApp {
 
     private HashMap<Integer, Gadget> gadgets;
-    private HashMap<Integer, GadgetGroup> gadgetGroup;
+    private ArrayList<GadgetGroup> gadgetGroup;
     private final Object lockObject_1;
     public volatile boolean terminate;
     private Settings settings;
@@ -27,9 +29,9 @@ public class ClientApp {
     //private static final String configFileJSON = "./config.json";  // When run as JAR on Linux
     private static final String gadgetFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgets.json"); // When run from IDE
     private static final String automationFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/automations.json"); // When run from IDE
+    private static final String gadgetGroupFile = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgetGroup.json");
     //Note: 'config.json' should be located "next to" the project folder: [config.json][PublicServer]
 
-    private static final String gadgetGroupFile = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgetGroup.json");
 
     private static ClientApp instance = null;
 
@@ -41,7 +43,8 @@ public class ClientApp {
     }
 
     private ClientApp() {
-        this.gadgets = new HashMap<Integer, Gadget>();
+        this.gadgets = new HashMap<>();
+        this.gadgetGroup = new ArrayList();
         this.lockObject_1 = new Object();
         this.terminate = false;
         this.lock_gadgets = new Object();
@@ -65,7 +68,8 @@ public class ClientApp {
             //configure gadgets, automations, and groups
             readGadgetFile();
             //TODO read automations
-            //TODO read groups
+            readGroupsFile();
+            printGroups();
 
             //Start polling thread (handles automations aswell)
             pollingThread.start();
@@ -179,7 +183,7 @@ public class ClientApp {
                 counter++;
             }
         }
-        ServerConnection.getInstance().writeToServer("303::" + cSessionID + "::" + counter +"::" + msgToServer);
+        ServerConnection.getInstance().writeToServer("303::" + cSessionID + "::" + counter + "::" + msgToServer);
     }
 
     //312 Alter gadget state
@@ -228,9 +232,7 @@ public class ClientApp {
     private void readAutomationFile() throws Exception {
         //TODO
         JSONParser parser = new JSONParser();
-
         JSONArray array = (JSONArray) parser.parse(new FileReader(automationFileJSON));
-
 
         for (Object object : array) {
             JSONObject automations = (JSONObject) object;
@@ -243,22 +245,31 @@ public class ClientApp {
         }
     }
 
-    private void readGadgetGroupsFile() throws Exception {
+    private void readGroupsFile() throws Exception {
         try (FileReader fileReader = new FileReader(gadgetGroupFile)) {
-            GadgetGroup[] gadgetGroups = new Gson().fromJson(gadgetGroupFile, GadgetGroup[].class);
-            System.out.println(Arrays.toString(gadgetGroups));
-        }catch (IOException e) {
+            Gson gson = new Gson();
+            Type type = new TypeToken<ArrayList<GadgetGroup>>() {
+            }.getType();
+            this.gadgetGroup = gson.fromJson(fileReader, type);
+        } catch (IOException e) {
             throw new Exception("Unable to read the GadgetGroup json file");
         }
     }
 
-    private void readGroupsFile() {
-        //TODO
+    private void printGroups() {
+        if (!gadgetGroup.isEmpty()) {
+            System.out.println("=== ALL GROUPS ===");
+            for (int i = 0; i<gadgetGroup.size(); i++){
+                System.out.println("GroupName: " + gadgetGroup.get(i).getGroupName());
+                System.out.println("Gadgets: " + Arrays.toString(gadgetGroup.get(i).getGadgets()));
+            }
+            System.out.println("====================");
+        }
     }
 
     private void printGadgets() {
         if (!gadgets.isEmpty()) {
-            System.out.println("=== ALL GADGETS ===\n");
+            System.out.println("=== ALL GADGETS ===");
             for (int key : gadgets.keySet()) {
                 System.out.println("Alias: " + gadgets.get(key).alias + "\n" +
                         "State: " + gadgets.get(key).getState());
