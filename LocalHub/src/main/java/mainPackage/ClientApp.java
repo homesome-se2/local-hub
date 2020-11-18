@@ -7,10 +7,8 @@ import models.*;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -44,7 +42,7 @@ public class ClientApp {
 
     private ClientApp() {
         this.gadgets = new HashMap<>();
-        this.gadgetGroup = new ArrayList();
+        this.gadgetGroup = new ArrayList<>();
         this.lockObject_1 = new Object();
         this.terminate = false;
         this.lock_gadgets = new Object();
@@ -78,7 +76,6 @@ public class ClientApp {
             } else {
                 System.out.println("Remote Access = False");
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -96,7 +93,6 @@ public class ClientApp {
     private void inputFromServer() throws Exception {
         //PS --> H
         while (!terminate) {
-            Scanner scanner = new Scanner(System.in);
             String commandFromServer = ServerConnection.getInstance().incomingServerCommands.take();
             String[] commands = commandFromServer.trim().split("::");
 
@@ -127,7 +123,6 @@ public class ClientApp {
         }
     }
 
-
     //==============================POLLING AND AUTOMATION HANDLING =========================
     private void pollGadgets() {
         int nbrOfGadgets;
@@ -142,19 +137,38 @@ public class ClientApp {
             }
         }
 
+        //poll gadget
+        //check if gadget present or not
+        //If present set last pollTime
+        //If state change notify clients
+        //If not present set to notPresent and notify clients
+
         while (!terminate) {
             for (int i = 0; i < nbrOfGadgets; i++) {
                 synchronized (lock_gadgets) {
                     //TODO, check automations aswell, can be implemented later
                     Gadget gadget = gadgets.get(gadgetKeys[i]);
                     long currentMillis = System.currentTimeMillis();
+                    boolean presentNow = gadget.isPresent();
 
                     //Check if gadget needs polling
                     if ((currentMillis - gadget.lastPollTime) > (gadget.pollDelaySec * 1000)) {
                         try {
                             gadget.poll();
-                            if (gadget.isPresent) {
+                            if (gadget.isPresent()) {
                                 gadget.setLastPollTime(System.currentTimeMillis());
+                            }
+
+                            //will compare the gadget.isPresent before and after the polling
+                            if (presentNow != gadget.isPresent()) {
+                                //The gadget has either became available or it have turned unavailable
+                                if (gadget.isPresent()) {
+                                    //The gadget has become available and is present
+                                    newGadgetDetected(gadget.id);
+                                } else {
+                                    //The gadget has become unavailable and is not present
+                                    gadgetConnectionLost(gadget.id);
+                                }
                             }
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -164,6 +178,20 @@ public class ClientApp {
             }
         }
     }
+
+    //==============================HUB ---> PUBLIC SERVER ==================================
+    //351 new gadget detected
+    private void newGadgetDetected(int gadgetID) {
+        //TODO needs to be tested
+        ServerConnection.getInstance().writeToServer("351::" + gadgets.get(gadgetID).toHoSoProtocol());
+    }
+
+    //353 gadget connection lost
+    private void gadgetConnectionLost(int gadgetID) {
+        //TODO needs to be tested
+        ServerConnection.getInstance().writeToServer("353::" + gadgetID);
+    }
+
 
     //==============================PUBLIC SERVER ---> HUB ==================================
     //121 SuccessfulLogin
@@ -177,7 +205,7 @@ public class ClientApp {
         StringBuilder msgToServer = new StringBuilder();
         int counter = 0;
         for (int i = 0; i < gadgets.size(); i++) {
-            if (gadgets.get(i).isPresent) {
+            if (gadgets.get(i).isPresent()) {
                 msgToServer.append(gadgets.get(i).toHoSoProtocol()).append("::");
                 counter++;
             }
@@ -189,7 +217,7 @@ public class ClientApp {
     private void alterGadgetState(String gadgetID, String newState) throws Exception {
         //TODO Synchronise gadgetList??
         for (int key : gadgets.keySet()) {
-            if (gadgets.get(key).id == Integer.parseInt(gadgetID) && gadgets.get(key).isPresent) {
+            if (gadgets.get(key).id == Integer.parseInt(gadgetID) && gadgets.get(key).isPresent()) {
                 gadgets.get(key).alterState(Float.parseFloat(newState));
             }
         }
@@ -200,7 +228,7 @@ public class ClientApp {
         //TODO
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("372::" + cSessionID);
-        for (int i = 0; i<gadgetGroup.size(); i++){
+        for (int i = 0; i < gadgetGroup.size(); i++) {
             stringBuilder.append(gadgetGroup.get(i).toHosoArrayFormat());
         }
         ServerConnection.getInstance().writeToServer(stringBuilder.toString());
@@ -227,7 +255,7 @@ public class ClientApp {
                     gadgets.put(id, gadgetBasic);
                 }
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new Exception("Problem reading gadgets.json");
         }
     }
@@ -266,9 +294,9 @@ public class ClientApp {
     private void printGroups() {
         if (!gadgetGroup.isEmpty()) {
             System.out.println("=== ALL GROUPS ===");
-            for (int i = 0; i < gadgetGroup.size(); i++) {
-                System.out.println("GroupName: " + gadgetGroup.get(i).getGroupName());
-                System.out.println("Gadgets: " + Arrays.toString(gadgetGroup.get(i).getGadgets()));
+            for (GadgetGroup aGadgetGroup : gadgetGroup) {
+                System.out.println("GroupName: " + aGadgetGroup.getGroupName());
+                System.out.println("Gadgets: " + Arrays.toString(aGadgetGroup.getGadgets()));
             }
             System.out.println("====================");
         }
