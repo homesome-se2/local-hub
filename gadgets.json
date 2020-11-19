@@ -7,9 +7,9 @@
     "valueTemplate": "light",
     "requestSpec" : "indoorLight",
     "pollDelaySec": "15",
-    "port": "8084",
-    "ip": "192.168.1.4"
-  }
+    "port": "8085",
+    "ip": "192.168.1.105"
+  },
   {
     "id": "1",
     "alias": "Outdoor Lamp",

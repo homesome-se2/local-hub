@@ -34,14 +34,14 @@ public class GadgetBasic extends Gadget {
             //if state changed
             if (splittedResponse[0].equalsIgnoreCase("314")) {
                 checkStateChange(splittedResponse[1]);
-                this.isPresent = true;
+                setPresent(true);
                 return;
             }
         } catch (Exception e) {
 
         }
         System.out.println("Gadget: " + this.id + " is not present..");
-        isPresent = false;
+        setPresent(false);
     }
 
     @Override

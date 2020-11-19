@@ -8,7 +8,7 @@ public abstract class Gadget {
     public String valueTemplate; //
     public long lastPollTime;
     public final long pollDelaySec;
-    public boolean isPresent;
+    private boolean isPresent;
 
     // Gadgets instantiated from JSON file (com.homesome.model.json) at system boot??
     public Gadget(int gadgetID, String alias, GadgetType type, String valueTemplate, long pollDelaySeconds) {
@@ -48,6 +48,14 @@ public abstract class Gadget {
         } else {
             state = newState;
         }
+    }
+
+    public boolean isPresent() {
+        return isPresent;
+    }
+
+    public void setPresent(boolean present) {
+        isPresent = present;
     }
 
     // Set last poll time when polling successed
