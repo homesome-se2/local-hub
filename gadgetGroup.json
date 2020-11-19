@@ -1,10 +1,10 @@
 [
   {
-    "groupName": "Kitchen Lamp",
-    "groupID" : [0,1]
+    "groupName": "Luddes gadgets",
+    "gadgets" : [0,1]
   },
   {
-    "groupName": "bathroom",
-    "groupID" : [1,2,3]
+    "groupName": "All gadgets",
+    "gadgets" : [0,1,2,3]
   }
 ]
