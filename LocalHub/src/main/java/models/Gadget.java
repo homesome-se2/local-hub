@@ -2,7 +2,7 @@ package models;
 
 public abstract class Gadget {
     public final int id;
-    public final String alias;
+    public String alias;
     public final GadgetType type;
     private float state;
     public String valueTemplate; //
@@ -70,5 +70,9 @@ public abstract class Gadget {
     // Translate gadget according to HoSo protocol. Gadget object -> HoSo protocol
     public String toHoSoProtocol() {
         return String.format("%s::%s::%s::%s::%s::%s", id, alias, type, valueTemplate, state, pollDelaySec);
+    }
+
+    public void setAlias(String alias) {
+        this.alias = alias;
     }
 }

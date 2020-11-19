@@ -39,3 +39,4 @@ public class GadgetGroup {
         return stringBuilder.toString();
     }
 }
+
