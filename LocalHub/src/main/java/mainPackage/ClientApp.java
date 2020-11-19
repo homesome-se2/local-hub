@@ -113,6 +113,10 @@ public class ClientApp {
                     //request to get gadget groups
                     requestOfGadgetGroups(commands[1]);
                     break;
+                case "402":
+                    //request to alter gadget alias
+
+                    break;
                 case "901":
                     System.out.println("ExceptionMessage: " + commands[1]);
                     break;
@@ -192,6 +196,13 @@ public class ClientApp {
         ServerConnection.getInstance().writeToServer("353::" + gadgetID);
     }
 
+    //402 Request to alter gadget alias
+    private void alterGadgetAlias(int gadgetID, String newAlias){
+        gadgets.get(gadgetID).setAlias(newAlias);
+        ServerConnection.getInstance().writeToServer("403::" + gadgetID + "::" + newAlias);
+    }
+
+    
 
     //==============================PUBLIC SERVER ---> HUB ==================================
     //121 SuccessfulLogin
@@ -313,5 +324,5 @@ public class ClientApp {
         }
     }
 
-    
+
 }
