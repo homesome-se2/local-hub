@@ -159,7 +159,7 @@ public class ClientApp {
                                 gadget.setLastPollTime(System.currentTimeMillis());
                             }
 
-                            //will compare the gadget.isPresent before and after the polling
+                            //will compare the gadget.isPresent before and after the polling to see availabilityChange.
                             if (presentNow != gadget.isPresent()) {
                                 //The gadget has either became available or it have turned unavailable
                                 if (gadget.isPresent()) {
@@ -225,11 +225,11 @@ public class ClientApp {
 
     //371 request of gadget Groups
     private void requestOfGadgetGroups(String cSessionID) {
-        //TODO
+        //TODO needs to be tested
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("372::" + cSessionID);
-        for (int i = 0; i < gadgetGroup.size(); i++) {
-            stringBuilder.append(gadgetGroup.get(i).toHosoArrayFormat());
+        stringBuilder.append("372::").append(cSessionID);
+        for (GadgetGroup aGadgetGroup : gadgetGroup) {
+            stringBuilder.append(aGadgetGroup.toHosoArrayFormat());
         }
         ServerConnection.getInstance().writeToServer(stringBuilder.toString());
     }
