@@ -2,18 +2,21 @@ package mainPackage;
 
 import communicationResources.ServerConnection;
 import models.*;
+import models.automations.Action;
+import models.automations.Delay;
+import models.automations.Trigger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 import java.io.File;
 import java.io.FileReader;
-import java.util.HashMap;
-import java.util.Scanner;
+import java.util.*;
 
 public class ClientApp {
 
     private HashMap<Integer, Gadget> gadgets;
+    private ArrayList<Automation> automationsList = new ArrayList<>();
     private final Object lockObject_1;
     public volatile boolean terminate;
     private Settings settings;
@@ -58,6 +61,7 @@ public class ClientApp {
 
             //configure gadgets, automations, and groups
             readGadgetFile();
+            readAutomationFile();
             //TODO read automations
             //TODO read groups
 
@@ -156,6 +160,31 @@ public class ClientApp {
         }
     }
 
+    private void triggerAutomationsHandler(Gadget gadget) throws Exception {
+
+        /*
+        //Creates array of all the masterIDs to check through
+        ArrayList<Integer> masterIDs = new ArrayList<>();
+        for (Automation automation: automationsList){
+            masterIDs.add(automation.getMasterId());
+        }
+        //Checks gadget ID with masterIDs to see if it needs automation
+        if (masterIDs.contains(gadget.id)){
+            //get the automation corresponding to the gadget
+            Automation automation = automationsList.get(gadget.id);
+            //Checks master state and slave state before sending alterGadgetState
+            //if delay or automation....
+            if(automation.getMasterState() == gadget.getState() && automation.getSlaveState() != gadgets.get(automation.getSlaveId()).getState()){
+                alterGadgetState(Integer.toString(automation.getSlaveId()), Float.toString(automation.getSlaveState()));
+                //Prints to console to see whats happening
+                System.out.println("Automatically changed state of " + automation.getSlaveId() + " to state " + automation.getSlaveId());
+                System.out.println("Because gadget " + automation.getMasterState() + "changed to " + gadget.getState());
+            }
+        }
+
+         */
+    }
+
     //==============================PUBLIC SERVER ---> HUB ==================================
     //121 SuccessfulLogin
     private void loginSuccessful() {
@@ -173,7 +202,7 @@ public class ClientApp {
                 counter++;
             }
         }
-        ServerConnection.getInstance().writeToServer("303::" + cSessionID + "::" + counter +"::" + msgToServer);
+        ServerConnection.getInstance().writeToServer("303::" + cSessionID + "::" + counter + "::" + msgToServer);
     }
 
     //312 Alter gadget state
@@ -224,15 +253,47 @@ public class ClientApp {
 
         JSONArray array = (JSONArray) parser.parse(new FileReader(automationFileJSON));
 
-
         for (Object object : array) {
             JSONObject automations = (JSONObject) object;
-            int masterId = Integer.parseInt((String) automations.get("masterId"));
-            int slaveId = Integer.parseInt((String) automations.get("slaveId"));
-            float masterState = Float.parseFloat((String) automations.get("masterState"));
-            float slaveState = Float.parseFloat((String) automations.get("slaveState"));
+            String name = (String) automations.get("name");
+            boolean enabled = (Boolean) automations.get("enabled");
 
-            Automation automation = new Automation(masterId, slaveId, masterState, slaveState);
+            Map trigger = ((Map) automations.get("trigger"));
+            Iterator<Map.Entry> itr1 = trigger.entrySet().iterator();
+            Map.Entry pair = itr1.next();
+            String stateCondition = (String) pair.getValue();
+            pair = itr1.next();
+            float state = Float.parseFloat((String) pair.getValue());
+            pair = itr1.next();
+            String type = (String) pair.getValue();
+            pair = itr1.next();
+            int id = Integer.parseInt((String) pair.getValue());
+
+            Map delay = ((Map) automations.get("delay"));
+            Iterator<Map.Entry> itr2 = delay.entrySet().iterator();
+            Map.Entry pair1 = itr2.next();
+            int hours = Integer.parseInt((String) pair1.getValue());
+            pair1 = itr2.next();
+            int seconds = Integer.parseInt((String) pair1.getValue());
+            pair1 = itr2.next();
+            int minutes = Integer.parseInt((String) pair1.getValue());
+
+
+            JSONArray jAction = (JSONArray) automations.get("action");
+            Iterator itr3 = jAction.iterator();
+            ArrayList<Action> actions = new ArrayList<>();
+            while (itr3.hasNext()) {
+                itr2 = ((Map) itr3.next()).entrySet().iterator();
+                while (itr2.hasNext()) {
+                    Map.Entry pair2 = itr2.next();
+                    float state2 = Float.parseFloat((String) pair2.getValue());
+                    pair2 = itr2.next();
+                    int gadgetID = Integer.parseInt((String) pair2.getValue());
+                    actions.add(new Action(gadgetID, state2));
+                }
+            }
+            automationsList.add(new Automation(name, enabled, new Trigger(type, id, stateCondition, state), new Delay(hours, minutes, seconds), actions));
+
         }
     }
 

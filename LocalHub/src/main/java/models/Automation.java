@@ -1,50 +1,67 @@
 package models;
 
 
+import models.automations.Action;
+import models.automations.Delay;
+import models.automations.Trigger;
+
+import java.util.ArrayList;
+
 //class represents a simple automation object of when the masterGadget reaches a
 //certain state, a slaveGadget changes to the set state
 public class Automation {
-    private int masterId;
-    private int slaveId;
-    private float masterState;
-    private float slaveState;
+    private String name;
+    private boolean enabled;
+    private Trigger trigger;
+    private Delay delay;
+    private ArrayList<Action> actions = new ArrayList<>();
 
-    public Automation(int masterId, int slaveId, float masterState, float slaveState) {
-        this.masterId = masterId;
-        this.slaveId = slaveId;
-        this.masterState = masterState;
-        this.slaveState = slaveState;
+    public Automation(String name, boolean enabled, Trigger trigger, Delay delay, ArrayList<Action> actions) {
+        this.name = name;
+        this.enabled = enabled;
+        this.trigger = trigger;
+        this.delay = delay;
+        this.actions = new ArrayList<Action>();
     }
 
-    public int getMasterId() {
-        return masterId;
+    public String getName() {
+        return name;
     }
 
-    public void setMasterId(int masterId) {
-        this.masterId = masterId;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public int getSlaveId() {
-        return slaveId;
+    public boolean isEnabled() {
+        return enabled;
     }
 
-    public void setSlaveId(int slaveId) {
-        this.slaveId = slaveId;
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
-    public float getMasterState() {
-        return masterState;
+    public Trigger getTrigger() {
+        return trigger;
     }
 
-    public void setMasterState(float masterState) {
-        this.masterState = masterState;
+    public void setTrigger(Trigger trigger) {
+        this.trigger = trigger;
     }
 
-    public float getSlaveState() {
-        return slaveState;
+    public Delay getDelay() {
+        return delay;
     }
 
-    public void setSlaveState(float slaveState) {
-        this.slaveState = slaveState;
+    public void setDelay(Delay delay) {
+        this.delay = delay;
     }
+
+    public ArrayList<Action> getActions() {
+        return actions;
+    }
+
+    public void setActions(ArrayList<Action> actions) {
+        this.actions = actions;
+    }
+
 }
