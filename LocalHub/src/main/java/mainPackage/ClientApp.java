@@ -160,7 +160,28 @@ public class ClientApp {
         }
     }
 
-    private void triggerAutomationsHandler(Gadget gadget) throws Exception {
+    private void automationsHandler(Gadget gadget) throws Exception {
+
+        ArrayList<Integer> gadgetsWithAutomations = new ArrayList();
+
+        //create list of all gadgets which has an automation
+        for (Automation automation : automationsList) {
+            gadgetsWithAutomations.add(automation.getTrigger().getGadgetID());
+        }
+
+        //returns if the current gadget does not have an automation
+        if (!gadgetsWithAutomations.contains(gadget.id)) {
+            return;
+        }
+
+        //Assign the current gadgets automation to automation
+        Automation automation = automationsList.get(gadget.id);
+
+        if (automation.getTrigger().getType().equals("event")) {
+            eventAutomation(automation, gadget);
+        } else if (automation.getTrigger().getType().equals("timestamp")) {
+            //Do stuff with timestamp
+        }
 
         /*
         //Creates array of all the masterIDs to check through
@@ -183,6 +204,55 @@ public class ClientApp {
         }
 
          */
+    }
+
+    private void eventAutomation(Automation automation, Gadget gadget) throws Exception {
+        switch (automation.getTrigger().getStateCondition()) {
+            case "equal_to":
+                if (automation.getTrigger().getState() == gadget.getState()) {
+                    //if delay set to 0, will skip over
+                    wait(automation.getDelay().timeInMills());
+                    //Iterates through all the actions for the automation
+                    for (int i = 0; i < automation.getActions().size(); i++) {
+                        Action action = automation.getActions().get(i);
+                        //checks to see if state is already at the desired state
+                        if (gadgets.get(action.getGadgetID()).getState() != action.getState()){
+                            alterGadgetState(Integer.toString(action.getGadgetID()), Float.toString(action.getState()));
+                        }
+                    }
+                }
+                break;
+            case "lower_than":
+                if (automation.getTrigger().getState() > gadget.getState()) {
+                    //if delay set to 0, will skip over
+                    wait(automation.getDelay().timeInMills());
+                    //Iterates through all the actions for the automation
+                    for (int i = 0; i < automation.getActions().size(); i++) {
+                        Action action = automation.getActions().get(i);
+                        //checks to see if state is already at the desired state
+                        if (gadgets.get(action.getGadgetID()).getState() != action.getState()){
+                            alterGadgetState(Integer.toString(action.getGadgetID()), Float.toString(action.getState()));
+                        }
+                    }
+                }
+                break;
+            case "high_than":
+                if (automation.getTrigger().getState() < gadget.getState()) {
+                    //if delay set to 0, will skip over
+                    wait(automation.getDelay().timeInMills());
+                    //Iterates through all the actions for the automation
+                    for (int i = 0; i < automation.getActions().size(); i++) {
+                        Action action = automation.getActions().get(i);
+                        //checks to see if state is already at the desired state
+                        if (gadgets.get(action.getGadgetID()).getState() != action.getState()){
+                            alterGadgetState(Integer.toString(action.getGadgetID()), Float.toString(action.getState()));
+                        }
+                    }
+                }
+                break;
+            default:
+                System.out.println("wrong state condition" + automation.getTrigger().getStateCondition());
+        }
     }
 
     //==============================PUBLIC SERVER ---> HUB ==================================

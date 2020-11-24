@@ -1,5 +1,7 @@
 package models.automations;
 
+import java.util.concurrent.TimeUnit;
+
 public class Delay {
     private int hours;
     private int minutes;
@@ -33,6 +35,10 @@ public class Delay {
 
     public void setSeconds(int seconds) {
         this.seconds = seconds;
+    }
+
+    public long timeInMills(){
+        return TimeUnit.HOURS.toMillis(this.hours) + TimeUnit.MINUTES.toMillis(this.minutes) + TimeUnit.SECONDS.toMillis(this.seconds);
     }
 
 }
