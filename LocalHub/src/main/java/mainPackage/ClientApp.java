@@ -39,6 +39,7 @@ public class ClientApp {
 
     private ClientApp() {
         this.gadgets = new HashMap<Integer, Gadget>();
+        this.automationsList = new ArrayList<Automation>();
         this.lockObject_1 = new Object();
         this.terminate = false;
         this.lock_gadgets = new Object();
@@ -162,7 +163,7 @@ public class ClientApp {
 
     private void automationsHandler(Gadget gadget) throws Exception {
 
-        ArrayList<Integer> gadgetsWithAutomations = new ArrayList();
+        ArrayList<Integer> gadgetsWithAutomations = new ArrayList<>();
 
         //create list of all gadgets which has an automation
         for (Automation automation : automationsList) {
@@ -182,76 +183,45 @@ public class ClientApp {
         } else if (automation.getTrigger().getType().equals("timestamp")) {
             //Do stuff with timestamp
         }
-
-        /*
-        //Creates array of all the masterIDs to check through
-        ArrayList<Integer> masterIDs = new ArrayList<>();
-        for (Automation automation: automationsList){
-            masterIDs.add(automation.getMasterId());
-        }
-        //Checks gadget ID with masterIDs to see if it needs automation
-        if (masterIDs.contains(gadget.id)){
-            //get the automation corresponding to the gadget
-            Automation automation = automationsList.get(gadget.id);
-            //Checks master state and slave state before sending alterGadgetState
-            //if delay or automation....
-            if(automation.getMasterState() == gadget.getState() && automation.getSlaveState() != gadgets.get(automation.getSlaveId()).getState()){
-                alterGadgetState(Integer.toString(automation.getSlaveId()), Float.toString(automation.getSlaveState()));
-                //Prints to console to see whats happening
-                System.out.println("Automatically changed state of " + automation.getSlaveId() + " to state " + automation.getSlaveId());
-                System.out.println("Because gadget " + automation.getMasterState() + "changed to " + gadget.getState());
-            }
-        }
-
-         */
     }
 
     private void eventAutomation(Automation automation, Gadget gadget) throws Exception {
+        //not sure if threads are needed to handle the wait
         switch (automation.getTrigger().getStateCondition()) {
             case "equal_to":
                 if (automation.getTrigger().getState() == gadget.getState()) {
                     //if delay set to 0, will skip over
                     wait(automation.getDelay().timeInMills());
-                    //Iterates through all the actions for the automation
-                    for (int i = 0; i < automation.getActions().size(); i++) {
-                        Action action = automation.getActions().get(i);
-                        //checks to see if state is already at the desired state
-                        if (gadgets.get(action.getGadgetID()).getState() != action.getState()){
-                            alterGadgetState(Integer.toString(action.getGadgetID()), Float.toString(action.getState()));
-                        }
-                    }
+                    doAction(automation);
                 }
                 break;
             case "lower_than":
                 if (automation.getTrigger().getState() > gadget.getState()) {
                     //if delay set to 0, will skip over
                     wait(automation.getDelay().timeInMills());
-                    //Iterates through all the actions for the automation
-                    for (int i = 0; i < automation.getActions().size(); i++) {
-                        Action action = automation.getActions().get(i);
-                        //checks to see if state is already at the desired state
-                        if (gadgets.get(action.getGadgetID()).getState() != action.getState()){
-                            alterGadgetState(Integer.toString(action.getGadgetID()), Float.toString(action.getState()));
-                        }
-                    }
+                    doAction(automation);
                 }
                 break;
             case "high_than":
                 if (automation.getTrigger().getState() < gadget.getState()) {
                     //if delay set to 0, will skip over
                     wait(automation.getDelay().timeInMills());
-                    //Iterates through all the actions for the automation
-                    for (int i = 0; i < automation.getActions().size(); i++) {
-                        Action action = automation.getActions().get(i);
-                        //checks to see if state is already at the desired state
-                        if (gadgets.get(action.getGadgetID()).getState() != action.getState()){
-                            alterGadgetState(Integer.toString(action.getGadgetID()), Float.toString(action.getState()));
-                        }
-                    }
+                    doAction(automation);
                 }
                 break;
             default:
-                System.out.println("wrong state condition" + automation.getTrigger().getStateCondition());
+                System.out.println("wrong state condition: " + automation.getTrigger().getStateCondition());
+        }
+    }
+
+    public void doAction(Automation automation) throws Exception {
+        //Iterates through all the actions for the automation
+        for (int i = 0; i < automation.getActions().size(); i++) {
+            Action action = automation.getActions().get(i);
+            //checks to see if state is already at the desired state
+            if (gadgets.get(action.getGadgetID()).getState() != action.getState()){
+                alterGadgetState(Integer.toString(action.getGadgetID()), Float.toString(action.getState()));
+            }
         }
     }
 
