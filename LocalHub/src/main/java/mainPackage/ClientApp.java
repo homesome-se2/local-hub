@@ -115,7 +115,7 @@ public class ClientApp {
                     break;
                 case "402":
                     //request to alter gadget alias
-
+                    alterGadgetAlias(Integer.parseInt(commands[2]), commands[3]);
                     break;
                 case "901":
                     System.out.println("ExceptionMessage: " + commands[1]);
@@ -187,22 +187,26 @@ public class ClientApp {
     //351 new gadget detected
     private void newGadgetDetected(int gadgetID) {
         //TODO needs to be tested
-        ServerConnection.getInstance().writeToServer("351::" + gadgets.get(gadgetID).toHoSoProtocol());
+        if (ServerConnection.getInstance().loggedInToServer) {
+            ServerConnection.getInstance().writeToServer("351::" + gadgets.get(gadgetID).toHoSoProtocol());
+        }
     }
 
     //353 gadget connection lost
     private void gadgetConnectionLost(int gadgetID) {
         //TODO needs to be tested
-        ServerConnection.getInstance().writeToServer("353::" + gadgetID);
+        if (ServerConnection.getInstance().loggedInToServer) {
+            ServerConnection.getInstance().writeToServer("353::" + gadgetID);
+        }
     }
 
     //402 Request to alter gadget alias
-    private void alterGadgetAlias(int gadgetID, String newAlias){
+    private void alterGadgetAlias(int gadgetID, String newAlias) {
         gadgets.get(gadgetID).setAlias(newAlias);
-        ServerConnection.getInstance().writeToServer("403::" + gadgetID + "::" + newAlias);
+        if (ServerConnection.getInstance().loggedInToServer) {
+            ServerConnection.getInstance().writeToServer("403::" + gadgetID + "::" + newAlias);
+        }
     }
-
-    
 
     //==============================PUBLIC SERVER ---> HUB ==================================
     //121 SuccessfulLogin
@@ -221,16 +225,23 @@ public class ClientApp {
                 counter++;
             }
         }
-        ServerConnection.getInstance().writeToServer("303::" + cSessionID + "::" + counter + "::" + msgToServer);
+        if (ServerConnection.getInstance().loggedInToServer){
+            ServerConnection.getInstance().writeToServer("303::" + cSessionID + "::" + counter + "::" + msgToServer);
+        }
     }
 
     //312 Alter gadget state
     private void alterGadgetState(String gadgetID, String newState) throws Exception {
-        //TODO Synchronise gadgetList??
-        for (int key : gadgets.keySet()) {
-            if (gadgets.get(key).id == Integer.parseInt(gadgetID) && gadgets.get(key).isPresent()) {
-                gadgets.get(key).alterState(Float.parseFloat(newState));
+        synchronized (lock_gadgets) {
+            if (gadgets.get(Integer.parseInt(gadgetID)).type == GadgetType.SWITCH || gadgets.get(Integer.parseInt(gadgetID)).type == GadgetType.SET_VALUE) {
+                gadgets.get(Integer.parseInt(gadgetID)).alterState(Float.parseFloat(newState));
             }
+            /*for (int key : gadgets.keySet()) {
+                if (gadgets.get(key).id == Integer.parseInt(gadgetID) && gadgets.get(key).isPresent()) {
+
+                    gadgets.get(key).alterState(Float.parseFloat(newState));
+                }
+            }*/
         }
     }
 
@@ -242,7 +253,9 @@ public class ClientApp {
         for (GadgetGroup aGadgetGroup : gadgetGroup) {
             stringBuilder.append(aGadgetGroup.toHosoArrayFormat());
         }
-        ServerConnection.getInstance().writeToServer(stringBuilder.toString());
+        if (ServerConnection.getInstance().loggedInToServer){
+            ServerConnection.getInstance().writeToServer(stringBuilder.toString());
+        }
     }
 
     //========================= FILE HANDLING ===============================================
@@ -323,6 +336,4 @@ public class ClientApp {
             System.out.println("====================");
         }
     }
-
-
 }

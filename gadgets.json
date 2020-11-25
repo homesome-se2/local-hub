@@ -1,24 +1,79 @@
 [
   {
     "id": "0",
+    "alias": "Bedroom Lamp",
+    "enable" : "true",
+    "type": "SWITCH",
+    "valueTemplate": "light",
+    "requestSpec" : "null",
+    "pollDelaySec": "30",
+    "port": "8085",
+    "ip": "192.168.1.107"
+  },
+  {
+    "id": "1",
     "alias": "Indoor Lamp",
     "enable" : "true",
     "type": "SWITCH",
     "valueTemplate": "light",
-    "requestSpec" : "indoorLight",
-    "pollDelaySec": "15",
+    "requestSpec" : "indoorLamp",
+    "pollDelaySec": "30",
     "port": "8085",
-    "ip": "192.168.1.105"
+    "ip": "192.168.1.107"
   },
   {
-    "id": "1",
+    "id": "2",
     "alias": "Outdoor Lamp",
     "enable" : "true",
     "type": "SWITCH",
     "valueTemplate": "light",
-    "requestSpec" : "outdoorLight",
+    "requestSpec" : "outdoorLamp",
     "pollDelaySec": "30",
-    "port": "8084",
-    "ip": "192.168.1.4"
-  }
+    "port": "8085",
+    "ip": "192.168.1.107"
+  },
+  {
+    "id": "3",
+    "alias": "Kitchen Lamp",
+    "enable" : "true",
+    "type": "SWITCH",
+    "valueTemplate": "light",
+    "requestSpec" : "kitchenLamp",
+    "pollDelaySec": "30",
+    "port": "8085",
+    "ip": "192.168.1.107"
+  },
+  {
+    "id": "4",
+    "alias": "Temperature Sensor",
+    "enable" : "true",
+    "type": "SENSOR",
+    "valueTemplate": "default",
+    "requestSpec" : "temp",
+    "pollDelaySec": "10",
+    "port": "8085",
+    "ip": "192.168.1.107"
+  },
+  {
+    "id": "5",
+    "alias": "Humidity Sensor",
+    "enable" : "true",
+    "type": "SENSOR",
+    "valueTemplate": "default",
+    "requestSpec" : "humidity",
+    "pollDelaySec": "10",
+    "port": "8085",
+    "ip": "192.168.1.107"
+  },
+  {
+    "id": "6",
+    "alias": "Analog LED",
+    "enable" : "true",
+    "type": "SET_VALUE",
+    "valueTemplate": "light",
+    "requestSpec" : "null",
+    "pollDelaySec": "5",
+    "port": "8085",
+    "ip": "192.168.1.105"
+  },
 ]
