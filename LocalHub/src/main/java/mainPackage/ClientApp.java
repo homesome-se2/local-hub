@@ -1,6 +1,7 @@
 package mainPackage;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import communicationResources.ServerConnection;
 import models.*;
@@ -10,6 +11,7 @@ import org.json.simple.parser.JSONParser;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -200,11 +202,16 @@ public class ClientApp {
         }
     }
 
-    //402 Request to alter gadget alias
-    private void alterGadgetAlias(int gadgetID, String newAlias) {
-        gadgets.get(gadgetID).setAlias(newAlias);
-        if (ServerConnection.getInstance().loggedInToServer) {
-            ServerConnection.getInstance().writeToServer("403::" + gadgetID + "::" + newAlias);
+    //402 Request to alter gadget alias //TODO test
+    private void alterGadgetAlias(int gadgetID, String newAlias) throws Exception {
+        try {
+            gadgets.get(gadgetID).setAlias(newAlias);
+            alterAliasInJson(newAlias);
+            if (ServerConnection.getInstance().loggedInToServer) {
+                ServerConnection.getInstance().writeToServer("403::" + gadgetID + "::" + newAlias);
+            }
+        } catch (Exception e) {
+            throw new Exception(e.getMessage());
         }
     }
 
@@ -219,13 +226,13 @@ public class ClientApp {
     private void newClientRequestsGadgets(String cSessionID) {
         StringBuilder msgToServer = new StringBuilder();
         int counter = 0;
-        for (int i = 0; i < gadgets.size(); i++) {
-            if (gadgets.get(i).isPresent()) {
-                msgToServer.append(gadgets.get(i).toHoSoProtocol()).append("::");
+        for (int key : gadgets.keySet()) {
+            if (gadgets.get(key).isPresent()) {
+                msgToServer.append(gadgets.get(key).toHoSoProtocol()).append("::");
                 counter++;
             }
         }
-        if (ServerConnection.getInstance().loggedInToServer){
+        if (ServerConnection.getInstance().loggedInToServer) {
             ServerConnection.getInstance().writeToServer("303::" + cSessionID + "::" + counter + "::" + msgToServer);
         }
     }
@@ -253,7 +260,7 @@ public class ClientApp {
         for (GadgetGroup aGadgetGroup : gadgetGroup) {
             stringBuilder.append(aGadgetGroup.toHosoArrayFormat());
         }
-        if (ServerConnection.getInstance().loggedInToServer){
+        if (ServerConnection.getInstance().loggedInToServer) {
             ServerConnection.getInstance().writeToServer(stringBuilder.toString());
         }
     }
@@ -266,21 +273,36 @@ public class ClientApp {
             for (Object object : array) {
                 JSONObject gadget = (JSONObject) object;
                 if (gadget.get("enable").equals("true")) {
-                    int id = Integer.parseInt((String) gadget.get("id"));
+                    int id = Integer.parseInt(String.valueOf(gadget.get("id")));
                     String alias = (String) gadget.get("alias");
                     GadgetType type = GadgetType.valueOf((String) gadget.get("type"));
                     String valueTemplate = (String) gadget.get("valueTemplate");
                     String requestSpec = (String) gadget.get("requestSpec");
-                    long pollDelaySeconds = Long.parseLong((String) gadget.get("pollDelaySec"));
-                    int port = Integer.parseInt((String) gadget.get("port"));
+                    long pollDelaySeconds = Long.parseLong(String.valueOf(gadget.get("pollDelaySec")));
+                    int port = Integer.parseInt(String.valueOf(gadget.get("port")));
                     String ip = (String) gadget.get("ip");
 
                     GadgetBasic gadgetBasic = new GadgetBasic(id, alias, type, valueTemplate, requestSpec, -1, pollDelaySeconds, port, ip);
                     gadgets.put(id, gadgetBasic);
                 }
             }
+
+            printGadgets();
         } catch (Exception e) {
             throw new Exception("Problem reading gadgets.json");
+        }
+    }
+
+    //TODO test
+    private void alterAliasInJson(String newAlias) throws Exception {
+        try {
+            FileWriter fileWriter = new FileWriter(gadgetFileJSON);
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            fileWriter.write(gson.toJson(gadgets));
+            fileWriter.flush();
+            fileWriter.close();
+        } catch (Exception e) {
+            throw new Exception("Problem updating alias in gadgets.json");
         }
     }
 
@@ -331,7 +353,7 @@ public class ClientApp {
             System.out.println("=== ALL GADGETS ===");
             for (int key : gadgets.keySet()) {
                 System.out.println("Alias: " + gadgets.get(key).alias + "\n" +
-                        "State: " + gadgets.get(key).getState());
+                        "State: " + gadgets.get(key).getState() + "\n" + "Present: " + gadgets.get(key).isPresent());
             }
             System.out.println("====================");
         }

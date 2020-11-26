@@ -25,6 +25,7 @@ public class GadgetBasic extends Gadget {
         this.ip = ip;
         this.requestSpec = requestSpec;
     }
+
     @Override
     public void poll() {
         try {
@@ -87,12 +88,14 @@ public class GadgetBasic extends Gadget {
         }
     }
 
+
+    //TODO test needs to be implemented in the gadgets aswell for translation?
     //This method will encrypt and decrypt
     private static String encryptDecrypt(String input) {
-        char[] key = {'A', 'K', 'M','F','S'};
+        char[] key = {'A', 'K', 'M', 'F', 'S'};
         StringBuilder output = new StringBuilder();
-        for(int i = 0 ; i < input.length() ; i++) {
-            output.append((char)(input.charAt(i) ^ key[i % key.length]));
+        for (int i = 0; i < input.length(); i++) {
+            output.append((char) (input.charAt(i) ^ key[i % key.length]));
         }
         return output.toString();
     }
@@ -108,7 +111,7 @@ public class GadgetBasic extends Gadget {
     @Override
     public void setState(float newState) {
         super.setState(newState);
-        if (ServerConnection.getInstance().loggedInToServer){
+        if (ServerConnection.getInstance().loggedInToServer) {
             ServerConnection.getInstance().writeToServer("315::" + this.id + "::" + newState);
         }
     }
