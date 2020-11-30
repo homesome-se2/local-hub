@@ -5,23 +5,23 @@
 	"trigger": 
 	{
 		"type": "event",
-		"gadget_id": "12",
+		"gadget_id": "0",
 		"state_condition": "equal_to"
 		"state": "1"
 	},
 	"delay":
 	{
 		"hours": "0",
-		"minutes": "30",
-		"seconds": "0"
+		"minutes": "0",
+		"seconds": "30"
 	},
 	"action": [
 	 {
-	 "gadget_id": "12",
+	 "gadget_id": "0",
 	 "state": "0"
 	 },
 	 {
-	 "gadget_id": "10"
+	 "gadget_id": "1"
 	 "state": "1"
 	 }
 	 ]

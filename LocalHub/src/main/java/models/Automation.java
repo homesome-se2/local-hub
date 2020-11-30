@@ -6,6 +6,7 @@ import models.automations.Delay;
 import models.automations.Trigger;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 //class represents a simple automation object of when the masterGadget reaches a
 //certain state, a slaveGadget changes to the set state
@@ -14,14 +15,12 @@ public class Automation {
     private boolean enabled;
     private Trigger trigger;
     private Delay delay;
-    private ArrayList<Action> actions = new ArrayList<>();
 
-    public Automation(String name, boolean enabled, Trigger trigger, Delay delay, ArrayList<Action> actions) {
+    public Automation(String name, boolean enabled, Trigger trigger, Delay delay) {
         this.name = name;
         this.enabled = enabled;
         this.trigger = trigger;
         this.delay = delay;
-        this.actions = new ArrayList<Action>();
     }
 
     public String getName() {
@@ -55,13 +54,4 @@ public class Automation {
     public void setDelay(Delay delay) {
         this.delay = delay;
     }
-
-    public ArrayList<Action> getActions() {
-        return actions;
-    }
-
-    public void setActions(ArrayList<Action> actions) {
-        this.actions = actions;
-    }
-
 }

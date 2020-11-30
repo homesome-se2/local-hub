@@ -17,11 +17,13 @@ public class ClientApp {
 
     private HashMap<Integer, Gadget> gadgets;
     private ArrayList<Automation> automationsList = new ArrayList<>();
+    private HashMap<Integer, List<Action>> actionMap;
     private final Object lockObject_1;
     public volatile boolean terminate;
     private Settings settings;
     private Thread pollingThread;
     private final Object lock_gadgets;
+    private boolean timerRunning = false;
 
     //private static final String configFileJSON = "./config.json";  // When run as JAR on Linux
     private static final String gadgetFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgets.json"); // When run from IDE
@@ -40,6 +42,7 @@ public class ClientApp {
     private ClientApp() {
         this.gadgets = new HashMap<Integer, Gadget>();
         this.automationsList = new ArrayList<Automation>();
+        this.actionMap = new HashMap<Integer, List<Action>>();
         this.lockObject_1 = new Object();
         this.terminate = false;
         this.lock_gadgets = new Object();
@@ -63,7 +66,6 @@ public class ClientApp {
             //configure gadgets, automations, and groups
             readGadgetFile();
             readAutomationFile();
-            //TODO read automations
             //TODO read groups
 
             //Start polling thread (handles automations aswell)
@@ -149,6 +151,7 @@ public class ClientApp {
                     if ((currentMillis - gadget.lastPollTime) > (gadget.pollDelaySec * 1000)) {
                         try {
                             gadget.poll();
+                            automationsHandler(gadget);
                             if (gadget.isPresent) {
                                 gadget.setLastPollTime(System.currentTimeMillis());
                             }
@@ -161,68 +164,75 @@ public class ClientApp {
         }
     }
 
+    //call and pass gadget to check and do automation
     private void automationsHandler(Gadget gadget) throws Exception {
-
         ArrayList<Integer> gadgetsWithAutomations = new ArrayList<>();
-
         //create list of all gadgets which has an automation
         for (Automation automation : automationsList) {
             gadgetsWithAutomations.add(automation.getTrigger().getGadgetID());
         }
-
         //returns if the current gadget does not have an automation
         if (!gadgetsWithAutomations.contains(gadget.id)) {
             return;
         }
-
         //Assign the current gadgets automation to automation
         Automation automation = automationsList.get(gadget.id);
-
+        //if not enable, return
+        if (!automation.isEnabled()) {
+            return;
+        }
         if (automation.getTrigger().getType().equals("event")) {
-            eventAutomation(automation, gadget);
+            switch (automation.getTrigger().getStateCondition()) {
+                case "equal_to":
+                    if (automation.getTrigger().getState() == gadget.getState()) {
+                        doAction(automation, gadget);
+                    }
+                    break;
+                case "lower_than":
+                    if (automation.getTrigger().getState() > gadget.getState()) {
+                        doAction(automation, gadget);
+                    }
+                    break;
+                case "high_than":
+                    if (automation.getTrigger().getState() < gadget.getState()) {
+                        doAction(automation, gadget);
+                    }
+                    break;
+                default:
+                    System.out.println("wrong state condition: " + automation.getTrigger().getStateCondition());
+            }
         } else if (automation.getTrigger().getType().equals("timestamp")) {
             //Do stuff with timestamp
         }
     }
 
-    private void eventAutomation(Automation automation, Gadget gadget) throws Exception {
-        //not sure if threads are needed to handle the wait
-        switch (automation.getTrigger().getStateCondition()) {
-            case "equal_to":
-                if (automation.getTrigger().getState() == gadget.getState()) {
-                    //if delay set to 0, will skip over
-                    wait(automation.getDelay().timeInMills());
-                    doAction(automation);
-                }
-                break;
-            case "lower_than":
-                if (automation.getTrigger().getState() > gadget.getState()) {
-                    //if delay set to 0, will skip over
-                    wait(automation.getDelay().timeInMills());
-                    doAction(automation);
-                }
-                break;
-            case "high_than":
-                if (automation.getTrigger().getState() < gadget.getState()) {
-                    //if delay set to 0, will skip over
-                    wait(automation.getDelay().timeInMills());
-                    doAction(automation);
-                }
-                break;
-            default:
-                System.out.println("wrong state condition: " + automation.getTrigger().getStateCondition());
-        }
-    }
-
-    public void doAction(Automation automation) throws Exception {
+    //Method to do actions from automations
+    public void doAction(Automation automation, Gadget gadget) throws Exception {
         //Iterates through all the actions for the automation
-        for (int i = 0; i < automation.getActions().size(); i++) {
-            Action action = automation.getActions().get(i);
-            //checks to see if state is already at the desired state
-            if (gadgets.get(action.getGadgetID()).getState() != action.getState()){
-                alterGadgetState(Integer.toString(action.getGadgetID()), Float.toString(action.getState()));
-            }
+        if (timerRunning){
+            return;
         }
+        System.out.println("doing automation: " + automation.getName());
+        Timer timer = new Timer();
+        System.out.println("Delaying automation for (HH:MM:SS): " + automation.getDelay().getHours()
+        + "::" + automation.getDelay().getMinutes() + "::" + automation.getDelay().getSeconds());
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                List<Action> actions = actionMap.get(gadget.id);
+                for (Action action : actions) {
+                    try {
+                        alterGadgetState(Integer.toString(action.getGadgetID()), Float.toString(action.getState()));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    System.out.println("Automatically changed " + action.getGadgetID() + " To State: " + action.getState());
+
+                }
+                timerRunning = false;
+            }
+        }, automation.getDelay().timeInMills()); timerRunning = true;
+
     }
 
     //==============================PUBLIC SERVER ---> HUB ==================================
@@ -292,6 +302,7 @@ public class ClientApp {
         JSONParser parser = new JSONParser();
 
         JSONArray array = (JSONArray) parser.parse(new FileReader(automationFileJSON));
+        ArrayList<Action> actions = new ArrayList<>();
 
         for (Object object : array) {
             JSONObject automations = (JSONObject) object;
@@ -321,7 +332,7 @@ public class ClientApp {
 
             JSONArray jAction = (JSONArray) automations.get("action");
             Iterator itr3 = jAction.iterator();
-            ArrayList<Action> actions = new ArrayList<>();
+
             while (itr3.hasNext()) {
                 itr2 = ((Map) itr3.next()).entrySet().iterator();
                 while (itr2.hasNext()) {
@@ -332,8 +343,9 @@ public class ClientApp {
                     actions.add(new Action(gadgetID, state2));
                 }
             }
-            automationsList.add(new Automation(name, enabled, new Trigger(type, id, stateCondition, state), new Delay(hours, minutes, seconds), actions));
-
+            Automation automation = new Automation(name, enabled, new Trigger(type, id, stateCondition, state), new Delay(hours, minutes, seconds));
+            automationsList.add(automation);
+            actionMap.put(id, actions);
         }
     }
 
