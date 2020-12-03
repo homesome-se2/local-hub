@@ -1,22 +1,25 @@
 package models;
 
+import java.util.List;
+
 public class GadgetGroup {
     //TODO
     //Create groups.json and read into groupsList in ClientApp
-    private String name;
+
+    public String groupName;
     private int[] gadgets;
 
-    public GadgetGroup(String name, int[] gadgets){
-        this.name = name;
-        this.gadgets = gadgets;
+    public GadgetGroup(String groupName, int[] gadget) {
+        this.groupName = groupName;
+        this.gadgets = gadget;
     }
 
-    public String getName() {
-        return name;
+    public String getGroupName() {
+        return groupName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
     }
 
     public int[] getGadgets() {
@@ -26,4 +29,14 @@ public class GadgetGroup {
     public void setGadgets(int[] gadgets) {
         this.gadgets = gadgets;
     }
+
+    public String toHosoArrayFormat(){
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("::" + this.groupName);
+        for (int i : this.gadgets){
+            stringBuilder.append(":" + i);
+        }
+        return stringBuilder.toString();
+    }
 }
+

@@ -25,7 +25,6 @@ public class GadgetBasic extends Gadget {
         this.ip = ip;
         this.requestSpec = requestSpec;
     }
-
     @Override
     public void poll() {
         try {
@@ -35,14 +34,15 @@ public class GadgetBasic extends Gadget {
             //if state changed
             if (splittedResponse[0].equalsIgnoreCase("314")) {
                 checkStateChange(splittedResponse[1]);
-                this.isPresent = true;
+                System.out.println("STATE: " + splittedResponse[1]);
+                setPresent(true);
                 return;
             }
         } catch (Exception e) {
 
         }
         System.out.println("Gadget: " + this.id + " is not present..");
-        isPresent = false;
+        setPresent(false);
     }
 
     @Override
@@ -72,10 +72,12 @@ public class GadgetBasic extends Gadget {
             this.output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 
             //Write to gadget
+            //this.output.write(encryptDecrypt(command.concat("\n")));
             this.output.write(command.concat("\n"));
             this.output.flush();
 
             //return the response from gadget
+            //return encryptDecrypt(input.readLine());
             return input.readLine();
         } catch (Exception e) {
             return null;
@@ -83,6 +85,16 @@ public class GadgetBasic extends Gadget {
             this.output.close();
             this.output.close();
         }
+    }
+
+    //This method will encrypt and decrypt
+    private static String encryptDecrypt(String input) {
+        char[] key = {'A', 'K', 'M','F','S'};
+        StringBuilder output = new StringBuilder();
+        for(int i = 0 ; i < input.length() ; i++) {
+            output.append((char)(input.charAt(i) ^ key[i % key.length]));
+        }
+        return output.toString();
     }
 
     private void checkStateChange(String newState) {
@@ -96,9 +108,10 @@ public class GadgetBasic extends Gadget {
     @Override
     public void setState(float newState) {
         super.setState(newState);
-        ServerConnection.getInstance().writeToServer("315::" + this.id + "::" + newState);
+        if (ServerConnection.getInstance().loggedInToServer){
+            ServerConnection.getInstance().writeToServer("315::" + this.id + "::" + newState);
+        }
     }
-
 
     private void closeConnections() {
         try {

@@ -2,13 +2,13 @@ package models;
 
 public abstract class Gadget {
     public final int id;
-    public final String alias;
+    public String alias;
     public final GadgetType type;
     private float state;
     public String valueTemplate; //
     public long lastPollTime;
     public final long pollDelaySec;
-    public boolean isPresent;
+    private boolean isPresent;
 
     // Gadgets instantiated from JSON file (com.homesome.model.json) at system boot??
     public Gadget(int gadgetID, String alias, GadgetType type, String valueTemplate, long pollDelaySeconds) {
@@ -50,6 +50,14 @@ public abstract class Gadget {
         }
     }
 
+    public boolean isPresent() {
+        return isPresent;
+    }
+
+    public void setPresent(boolean present) {
+        isPresent = present;
+    }
+
     // Set last poll time when polling successed
     public void setLastPollTime(long lastPollTime) {
         this.lastPollTime = lastPollTime;
@@ -62,5 +70,9 @@ public abstract class Gadget {
     // Translate gadget according to HoSo protocol. Gadget object -> HoSo protocol
     public String toHoSoProtocol() {
         return String.format("%s::%s::%s::%s::%s::%s", id, alias, type, valueTemplate, state, pollDelaySec);
+    }
+
+    public void setAlias(String alias) {
+        this.alias = alias;
     }
 }
