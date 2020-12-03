@@ -16,7 +16,7 @@ import java.util.*;
 public class ClientApp {
 
     private HashMap<Integer, Gadget> gadgets;
-    private ArrayList<Automation> automationsList = new ArrayList<>();
+    private ArrayList<Automation> automationsList;
     private HashMap<Integer, List<Action>> actionMap;
     private final Object lockObject_1;
     public volatile boolean terminate;
@@ -50,7 +50,11 @@ public class ClientApp {
         this.pollingThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                pollGadgets();
+                try {
+                    pollGadgets();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
@@ -127,7 +131,7 @@ public class ClientApp {
 
 
     //==============================POLLING AND AUTOMATION HANDLING =========================
-    private void pollGadgets() {
+    private void pollGadgets() throws Exception {
         int nbrOfGadgets;
         int[] gadgetKeys;
         synchronized (lock_gadgets) {
@@ -146,12 +150,10 @@ public class ClientApp {
                     //TODO, check automations aswell, can be implemented later
                     Gadget gadget = gadgets.get(gadgetKeys[i]);
                     long currentMillis = System.currentTimeMillis();
-
                     //Check if gadget needs polling
                     if ((currentMillis - gadget.lastPollTime) > (gadget.pollDelaySec * 1000)) {
                         try {
                             gadget.poll();
-                            automationsHandler(gadget);
                             if (gadget.isPresent) {
                                 gadget.setLastPollTime(System.currentTimeMillis());
                             }
@@ -176,7 +178,8 @@ public class ClientApp {
             return;
         }
         //Assign the current gadgets automation to automation
-        Automation automation = automationsList.get(gadget.id);
+
+        Automation automation = automationsList.get(gadgetsWithAutomations.indexOf(gadget.id));
         //if not enable, return
         if (!automation.isEnabled()) {
             return;
@@ -209,13 +212,13 @@ public class ClientApp {
     //Method to do actions from automations
     public void doAction(Automation automation, Gadget gadget) throws Exception {
         //Iterates through all the actions for the automation
-        if (timerRunning){
+        if (timerRunning) {
             return;
         }
         System.out.println("doing automation: " + automation.getName());
         Timer timer = new Timer();
         System.out.println("Delaying automation for (HH:MM:SS): " + automation.getDelay().getHours()
-        + "::" + automation.getDelay().getMinutes() + "::" + automation.getDelay().getSeconds());
+                + "::" + automation.getDelay().getMinutes() + "::" + automation.getDelay().getSeconds());
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -231,7 +234,8 @@ public class ClientApp {
                 }
                 timerRunning = false;
             }
-        }, automation.getDelay().timeInMills()); timerRunning = true;
+        }, automation.getDelay().timeInMills());
+        timerRunning = true;
 
     }
 
@@ -298,7 +302,6 @@ public class ClientApp {
     }
 
     private void readAutomationFile() throws Exception {
-        //TODO
         JSONParser parser = new JSONParser();
 
         JSONArray array = (JSONArray) parser.parse(new FileReader(automationFileJSON));

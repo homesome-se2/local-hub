@@ -21,4 +21,26 @@
     "port": "8085",
     "ip": "192.168.0.105"
   }
+  {
+    "id": "2",
+    "alias": "Kitchen Lamp",
+    "enable" : "true",
+    "type": "SWITCH",
+    "valueTemplate": "light",
+    "requestSpec" : "kitchenLight",
+    "pollDelaySec": "15",
+    "port": "8085",
+    "ip": "192.168.0.105"
+  }
+  {
+    "id": "3",
+    "alias": "Garage Lamp",
+    "enable" : "true",
+    "type": "SWITCH",
+    "valueTemplate": "light",
+    "requestSpec" : "garageLight",
+    "pollDelaySec": "30",
+    "port": "8085",
+    "ip": "192.168.0.105"
+  }
 ]

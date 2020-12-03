@@ -26,4 +26,31 @@
 	 }
 	 ]
   }
+   {
+    "name": "Garage Light",
+	"enabled": true,
+	"trigger": 
+	{
+		"type": "event",
+		"gadget_id": "2",
+		"state_condition": "equal_to"
+		"state": "1"
+	},
+	"delay":
+	{
+		"hours": "0",
+		"minutes": "1",
+		"seconds": "0"
+	},
+	"action": [
+	 {
+	 "gadget_id": "2",
+	 "state": "0"
+	 },
+	 {
+	 "gadget_id": "3"
+	 "state": "1"
+	 }
+	 ]
+  }
 ]
