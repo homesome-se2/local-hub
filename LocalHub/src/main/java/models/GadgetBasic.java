@@ -35,35 +35,38 @@ public class GadgetBasic extends Gadget {
             //if state changed
             if (splittedResponse[0].equalsIgnoreCase("314")) {
                 checkStateChange(splittedResponse[1]);
-                System.out.println("STATE: " + splittedResponse[1]);
                 setPresent(true);
                 return;
             }
         } catch (Exception e) {
-
+            setPresent(false);
         }
-        System.out.println("Gadget: " + this.id + " is not present..");
-        setPresent(false);
     }
 
     @Override
-    public void alterState(float requestedState) {
+    public void alterState(float requestedState) throws Exception{
         try {
-            System.out.println("Alter state of gadget: " + this.id);
+            if (type == GadgetType.SWITCH){
+                requestedState = requestedState == 1 ? 1 : 0;
+            }
+
             String response = sendCommand("{\"command\":313,\"requestSpec\":" + "\"" + requestSpec + "\",\"requestedState\":" + requestedState + "}");
 
             String splittedResponse[] = response.split("::");
             //if state changed
             if (splittedResponse[0].equalsIgnoreCase("314")) {
-                checkStateChange(splittedResponse[1]);
+                setState(Float.parseFloat(splittedResponse[1]));
+            } else {
+                setState(getState());
             }
         } catch (Exception e) {
-
+            setPresent(false);
+            throw new Exception();
         }
     }
 
     @Override
-    protected String sendCommand(String command) throws IOException {
+    protected String sendCommand(String command) throws Exception {
         try {
             this.socket = new Socket();
             this.socket.connect(new InetSocketAddress(this.ip, this.port), 1500);
@@ -81,10 +84,11 @@ public class GadgetBasic extends Gadget {
             //return encryptDecrypt(input.readLine());
             return input.readLine();
         } catch (Exception e) {
-            return null;
+            throw new Exception("Unable to connect to gadget.");
         } finally {
-            this.output.close();
-            this.output.close();
+            if (this.socket != null){
+                this.socket.close();
+            }
         }
     }
 
@@ -100,19 +104,27 @@ public class GadgetBasic extends Gadget {
         return output.toString();
     }
 
-    private void checkStateChange(String newState) {
-        if (Float.parseFloat(newState) != getState()) {
-            setState(Float.parseFloat(newState));
-        } else {
-            //ignore, no change of state in gadget
+    private void checkStateChange(String newState) throws Exception{
+        try {
+            if (Float.parseFloat(newState) != getState()) {
+                setState(Float.parseFloat(newState));
+            } else {
+                //ignore, no change of state in gadget
+            }
+        }catch (Exception e){
+            throw new Exception(e.getMessage());
         }
     }
 
     @Override
-    public void setState(float newState) {
+    public void setState(float newState)throws Exception {
         super.setState(newState);
-        if (ServerConnection.getInstance().loggedInToServer) {
-            ServerConnection.getInstance().writeToServer("315::" + this.id + "::" + newState);
+        try {
+            if (ServerConnection.getInstance().loggedInToServer) {
+                ServerConnection.getInstance().writeToServer("315::" + this.id + "::" + newState);
+            }
+        }catch (Exception e){
+            throw new Exception("Problem when writing to server. Command = 315.");
         }
     }
 
@@ -131,4 +143,5 @@ public class GadgetBasic extends Gadget {
             System.out.println("Problem closing gadget connections");
         }
     }
+
 }
