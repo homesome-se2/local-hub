@@ -1,6 +1,9 @@
 package mainPackage;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import communicationResources.ServerConnection;
 import models.*;
@@ -10,6 +13,7 @@ import org.json.simple.parser.JSONParser;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -24,12 +28,16 @@ public class ClientApp {
     private final Object lock_gadgets;
 
     //FILES
-    private static final String gadgetFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgets.json"); // When run from IDE
-    private static final String automationFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/automations.json"); // When run from IDE
-    private static final String gadgetGroupFile = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgetGroup.json");
-    //private static final String configFileJSON = "./config.json";  // When run as JAR on Linux
-    //Note: 'config.json' should be located "next to" the project folder: [config.json][PublicServer]
+    // When run from IDE
+    //private static final String gadgetFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgets.json");
+    //private static final String automationFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/automations.json");
+    //private static final String gadgetGroupFile = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgetGroup.json");
 
+    // When run as JAR on Linux
+    private static final String gadgetFileJSON = "./gadgets.json";
+    private static final String automationFileJSON = "./automations.json";
+    private static final String gadgetGroupFile = "./gadgetGroup.json";
+    //Note: 'config.json' should be located "next to" the project folder: [config.json][PublicServer]
 
     private static ClientApp instance = null;
 
@@ -50,7 +58,11 @@ public class ClientApp {
         this.pollingThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                pollGadgets();
+                try {
+                    pollGadgets();
+                } catch (Exception e) {
+                    System.out.println(e.getMessage());
+                }
             }
         });
     }
@@ -58,7 +70,7 @@ public class ClientApp {
     public void startHub() {
         try {
             //Print message
-            System.out.println("\nWelcome to LocalHub\n");
+            System.out.println("\nLocal Hub Running\n");
 
             //configure gadgets, automations, groups and settings
             configSettings();
@@ -77,7 +89,7 @@ public class ClientApp {
                 System.out.println("Remote Access = False");
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         }
     }
 
@@ -95,34 +107,37 @@ public class ClientApp {
         while (!terminate) {
             String commandFromServer = ServerConnection.getInstance().incomingServerCommands.take();
             String[] commands = commandFromServer.trim().split("::");
-
-            switch (commands[0]) {
-                case "121":
-                    //H login successful
-                    loginSuccessful();
-                    break;
-                case "302":
-                    //Request of gadgets (newly logged in client)
-                    newClientRequestsGadgets(commands[1]);
-                    break;
-                case "312":
-                    //Request to alter gadget state
-                    alterGadgetState(commands[1], commands[2]);
-                    break;
-                case "371":
-                    //request to get gadget groups
-                    requestOfGadgetGroups(commands[1]);
-                    break;
-                case "402":
-                    //request to alter gadget alias
-                    alterGadgetAlias(Integer.parseInt(commands[2]), commands[3]);
-                    break;
-                case "901":
-                    System.out.println("ExceptionMessage: " + commands[1]);
-                    break;
-                default:
-                    System.out.println("\n\nUnknown message from server \n\n");
-                    break;
+            try {
+                switch (commands[0]) {
+                    case "121":
+                        //H login successful
+                        loginSuccessful();
+                        break;
+                    case "302":
+                        //Request of gadgets (newly logged in client)
+                        newClientRequestsGadgets(commands[1]);
+                        break;
+                    case "312":
+                        //Request to alter gadget state
+                        alterGadgetState(commands[1], commands[2]);
+                        break;
+                    case "371":
+                        //request to get gadget groups
+                        requestOfGadgetGroups(commands[1]);
+                        break;
+                    case "402":
+                        //request to alter gadget alias
+                        alterGadgetAlias(Integer.parseInt(commands[2]), commands[3]);
+                        break;
+                    case "901":
+                        System.out.println("ExceptionMessage: " + commands[1]);
+                        break;
+                    default:
+                        System.out.println("\n\nUnknown message from server \n\n");
+                        break;
+                }
+            } catch (Exception e) {
+                throw new Exception(e.getMessage());
             }
         }
     }
@@ -141,12 +156,6 @@ public class ClientApp {
             }
         }
 
-        //poll gadget
-        //check if gadget present or not
-        //If present set last pollTime
-        //If state change notify clients
-        //If not present set to notPresent and notify clients
-
         while (!terminate) {
             for (int i = 0; i < nbrOfGadgets; i++) {
                 synchronized (lock_gadgets) {
@@ -162,7 +171,6 @@ public class ClientApp {
                             if (gadget.isPresent()) {
                                 gadget.setLastPollTime(System.currentTimeMillis());
                             }
-
                             //will compare the gadget.isPresent before and after the polling to see availabilityChange.
                             if (presentNow != gadget.isPresent()) {
                                 //The gadget has either became available or it have turned unavailable
@@ -175,7 +183,7 @@ public class ClientApp {
                                 }
                             }
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            //System.out.println(e.getMessage());
                         }
                     }
                 }
@@ -185,26 +193,39 @@ public class ClientApp {
 
     //==============================HUB ---> PUBLIC SERVER ==================================
     //351 new gadget detected
-    private void newGadgetDetected(int gadgetID) {
-        //TODO needs to be tested
-        if (ServerConnection.getInstance().loggedInToServer) {
-            ServerConnection.getInstance().writeToServer("351::" + gadgets.get(gadgetID).toHoSoProtocol());
+    private void newGadgetDetected(int gadgetID) throws Exception {
+        try {
+            if (ServerConnection.getInstance().loggedInToServer) {
+                ServerConnection.getInstance().writeToServer("351::" + gadgets.get(gadgetID).toHoSoProtocol());
+            }
+        } catch (Exception e) {
+            throw new Exception("Problem when writing to public server. Command = 351.");
         }
     }
 
     //353 gadget connection lost
-    private void gadgetConnectionLost(int gadgetID) {
-        //TODO needs to be tested
-        if (ServerConnection.getInstance().loggedInToServer) {
-            ServerConnection.getInstance().writeToServer("353::" + gadgetID);
+    private void gadgetConnectionLost(int gadgetID) throws Exception {
+        try {
+            if (ServerConnection.getInstance().loggedInToServer) {
+                ServerConnection.getInstance().writeToServer("353::" + gadgetID);
+            }
+        } catch (Exception e) {
+            throw new Exception("Problem when writing to server. Command = 353.");
         }
+
     }
 
     //402 Request to alter gadget alias
-    private void alterGadgetAlias(int gadgetID, String newAlias) {
-        gadgets.get(gadgetID).setAlias(newAlias);
-        if (ServerConnection.getInstance().loggedInToServer) {
-            ServerConnection.getInstance().writeToServer("403::" + gadgetID + "::" + newAlias);
+    private void alterGadgetAlias(int gadgetID, String newAlias) throws Exception {
+        try {
+            gadgets.get(gadgetID).setAlias(newAlias);
+            alterAliasInJson(gadgetID, newAlias);
+            if (ServerConnection.getInstance().loggedInToServer) {
+                ServerConnection.getInstance().writeToServer("403::" + gadgetID + "::" + newAlias);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new Exception("Problem when writing to Server. Command = 403.");
         }
     }
 
@@ -216,45 +237,58 @@ public class ClientApp {
     }
 
     //302 Request of gadgets (newly logged in client)
-    private void newClientRequestsGadgets(String cSessionID) {
+    private void newClientRequestsGadgets(String cSessionID) throws Exception {
         StringBuilder msgToServer = new StringBuilder();
         int counter = 0;
-        for (int i = 0; i < gadgets.size(); i++) {
-            if (gadgets.get(i).isPresent()) {
-                msgToServer.append(gadgets.get(i).toHoSoProtocol()).append("::");
-                counter++;
+        try {
+            for (int key : gadgets.keySet()) {
+                if (gadgets.get(key).isPresent()) {
+                    msgToServer.append(gadgets.get(key).toHoSoProtocol()).append("::");
+                    counter++;
+                }
             }
-        }
-        if (ServerConnection.getInstance().loggedInToServer){
-            ServerConnection.getInstance().writeToServer("303::" + cSessionID + "::" + counter + "::" + msgToServer);
+            if (ServerConnection.getInstance().loggedInToServer) {
+                ServerConnection.getInstance().writeToServer("303::" + cSessionID + "::" + counter + "::" + msgToServer);
+            }
+        } catch (Exception e) {
+            throw new Exception("Problem when writing to server. Command = 303.");
         }
     }
 
     //312 Alter gadget state
     private void alterGadgetState(String gadgetID, String newState) throws Exception {
         synchronized (lock_gadgets) {
-            if (gadgets.get(Integer.parseInt(gadgetID)).type == GadgetType.SWITCH || gadgets.get(Integer.parseInt(gadgetID)).type == GadgetType.SET_VALUE) {
-                gadgets.get(Integer.parseInt(gadgetID)).alterState(Float.parseFloat(newState));
+            float newFloatState;
+            try {
+                newFloatState = Float.parseFloat(newState);
+            } catch (Exception e) {
+                System.out.println("Invalid State Request");
+                return;
             }
-            /*for (int key : gadgets.keySet()) {
-                if (gadgets.get(key).id == Integer.parseInt(gadgetID) && gadgets.get(key).isPresent()) {
-
-                    gadgets.get(key).alterState(Float.parseFloat(newState));
+            try {
+                if (gadgets.get(Integer.parseInt(gadgetID)).type == GadgetType.SWITCH || gadgets.get(Integer.parseInt(gadgetID)).type == GadgetType.SET_VALUE) {
+                    gadgets.get(Integer.parseInt(gadgetID)).alterState(newFloatState);
                 }
-            }*/
+            } catch (Exception e) {
+                ServerConnection.getInstance().writeToServer("353::" + gadgetID);
+                System.out.println("Problem when altering state of gadget: " + gadgetID);
+            }
         }
     }
 
     //371 request of gadget Groups
-    private void requestOfGadgetGroups(String cSessionID) {
-        //TODO needs to be tested
+    private void requestOfGadgetGroups(String cSessionID) throws Exception {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("372::").append(cSessionID);
-        for (GadgetGroup aGadgetGroup : gadgetGroup) {
-            stringBuilder.append(aGadgetGroup.toHosoArrayFormat());
-        }
-        if (ServerConnection.getInstance().loggedInToServer){
-            ServerConnection.getInstance().writeToServer(stringBuilder.toString());
+        try {
+            for (GadgetGroup aGadgetGroup : gadgetGroup) {
+                stringBuilder.append(aGadgetGroup.toHosoArrayFormat());
+            }
+            if (ServerConnection.getInstance().loggedInToServer) {
+                ServerConnection.getInstance().writeToServer(stringBuilder.toString());
+            }
+        } catch (Exception e) {
+            throw new Exception("Problem when writing to server. Command = 372.");
         }
     }
 
@@ -266,21 +300,50 @@ public class ClientApp {
             for (Object object : array) {
                 JSONObject gadget = (JSONObject) object;
                 if (gadget.get("enable").equals("true")) {
-                    int id = Integer.parseInt((String) gadget.get("id"));
+                    int id = Integer.parseInt(String.valueOf(gadget.get("id")));
                     String alias = (String) gadget.get("alias");
                     GadgetType type = GadgetType.valueOf((String) gadget.get("type"));
                     String valueTemplate = (String) gadget.get("valueTemplate");
                     String requestSpec = (String) gadget.get("requestSpec");
-                    long pollDelaySeconds = Long.parseLong((String) gadget.get("pollDelaySec"));
-                    int port = Integer.parseInt((String) gadget.get("port"));
+                    long pollDelaySeconds = Long.parseLong(String.valueOf(gadget.get("pollDelaySec")));
+                    int port = Integer.parseInt(String.valueOf(gadget.get("port")));
                     String ip = (String) gadget.get("ip");
 
                     GadgetBasic gadgetBasic = new GadgetBasic(id, alias, type, valueTemplate, requestSpec, -1, pollDelaySeconds, port, ip);
                     gadgets.put(id, gadgetBasic);
                 }
             }
+            printGadgets();
         } catch (Exception e) {
             throw new Exception("Problem reading gadgets.json");
+        }
+    }
+
+    private void alterAliasInJson(int gadgetID, String newAlias) throws Exception {
+        String fileName = "";
+        if (gadgets.get(gadgetID) instanceof GadgetBasic) {
+            fileName = gadgetFileJSON;
+        }
+        // else instance of gadgetPerson.
+
+        try {
+            JSONParser parser = new JSONParser();
+            JSONArray array = (JSONArray) parser.parse(new FileReader(fileName));
+            for (Object object : array) {
+                JSONObject gadget = (JSONObject) object;
+                if ((Long) gadget.get("id") == gadgetID) {
+                    gadget.put("alias", newAlias);
+                    break;
+                }
+            }
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            String prettyJson = gson.toJson(array);
+            try (FileWriter writer = new FileWriter(fileName)) {
+                writer.write(prettyJson);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new Exception("Problem updating alias in gadgets.json");
         }
     }
 
@@ -331,7 +394,7 @@ public class ClientApp {
             System.out.println("=== ALL GADGETS ===");
             for (int key : gadgets.keySet()) {
                 System.out.println("Alias: " + gadgets.get(key).alias + "\n" +
-                        "State: " + gadgets.get(key).getState());
+                        "State: " + gadgets.get(key).getState() + "\n" + "Present: " + gadgets.get(key).isPresent());
             }
             System.out.println("====================");
         }

@@ -9,7 +9,8 @@ import java.io.FileReader;
 import java.io.IOException;
 
 public class Settings {
-    private final String settingsFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/settings.json");
+    //private final String settingsFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/settings.json");
+    private final String settingsFileJSON = "./settings.json";
     private boolean remoteAccessEnabled;
     private int remoteID;
     private String remotePassword;
