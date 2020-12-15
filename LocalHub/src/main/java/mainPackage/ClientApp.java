@@ -202,7 +202,7 @@ public class ClientApp {
         ServerConnection.getInstance().writeToServer("403::" + gadgetID + "::" + newAlias);
     }
 
-    
+
 
     //==============================PUBLIC SERVER ---> HUB ==================================
     //121 SuccessfulLogin

@@ -30,7 +30,7 @@ public class GadgetBasic extends Gadget {
         try {
             String response = sendCommand("{\"command\":341,\"requestSpec\":\"" + requestSpec + "\"}");
 
-            String splittedResponse[] = response.split("::");
+            String[] splittedResponse = response.split("::");
             //if state changed
             if (splittedResponse[0].equalsIgnoreCase("314")) {
                 checkStateChange(splittedResponse[1]);
@@ -50,7 +50,7 @@ public class GadgetBasic extends Gadget {
             System.out.println("Alter state of gadget: " + this.id);
             String response = sendCommand("{\"command\":313,\"requestSpec\":" + "\"" + requestSpec + "\",\"requestedState\":" + requestedState + "}");
 
-            String splittedResponse[] = response.split("::");
+            String[] splittedResponse = response.split("::");
             //if state changed
             if (splittedResponse[0].equalsIgnoreCase("314")) {
                 checkStateChange(splittedResponse[1]);
@@ -72,11 +72,13 @@ public class GadgetBasic extends Gadget {
             this.output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 
             //Write to gadget
-            this.output.write(encryptDecrypt(command.concat("\n")));
+            //this.output.write(encryptDecrypt(command.concat("\n")));
+            this.output.write(command.concat("\n"));
             this.output.flush();
 
             //return the response from gadget
-            return encryptDecrypt(input.readLine());
+            //return encryptDecrypt(input.readLine());
+            return input.readLine();
         } catch (Exception e) {
             return null;
         } finally {
@@ -87,7 +89,7 @@ public class GadgetBasic extends Gadget {
 
     //This method will encrypt and decrypt
     private static String encryptDecrypt(String input) {
-        char[] key = {'A', 'K', 'M','F','S'};
+        char[] key = {'A', 'K', 'M'};
         StringBuilder output = new StringBuilder();
         for(int i = 0 ; i < input.length() ; i++) {
             output.append((char)(input.charAt(i) ^ key[i % key.length]));
