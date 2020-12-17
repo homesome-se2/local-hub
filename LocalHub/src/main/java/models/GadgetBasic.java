@@ -19,8 +19,8 @@ public class GadgetBasic extends Gadget {
      * The com.homesome.model interacted with via this class are commonly built upon Arduino based WiFi-modules.
      */
 
-    public GadgetBasic(int gadgetID, String alias, GadgetType type, String valueTemplate, String requestSpec, float state, long pollDelaySeconds, int port, String ip) {
-        super(gadgetID, alias, type, valueTemplate, state, pollDelaySeconds);
+    public GadgetBasic(int gadgetID, String alias, GadgetType type, String valueTemplate, String requestSpec, long pollDelaySeconds, int port, String ip,boolean enabled) {
+        super(gadgetID, alias, type, valueTemplate, pollDelaySeconds,enabled);
         this.port = port;
         this.ip = ip;
         this.requestSpec = requestSpec;
@@ -31,7 +31,7 @@ public class GadgetBasic extends Gadget {
         try {
             String response = sendCommand("{\"command\":341,\"requestSpec\":\"" + requestSpec + "\"}");
 
-            String splittedResponse[] = response.split("::");
+            String[] splittedResponse = response.split("::");
             //if state changed
             if (splittedResponse[0].equalsIgnoreCase("314")) {
                 checkStateChange(splittedResponse[1]);
@@ -52,7 +52,7 @@ public class GadgetBasic extends Gadget {
 
             String response = sendCommand("{\"command\":313,\"requestSpec\":" + "\"" + requestSpec + "\",\"requestedState\":" + requestedState + "}");
 
-            String splittedResponse[] = response.split("::");
+            String[] splittedResponse = response.split("::");
             //if state changed
             if (splittedResponse[0].equalsIgnoreCase("314")) {
                 setState(Float.parseFloat(splittedResponse[1]));
@@ -96,7 +96,9 @@ public class GadgetBasic extends Gadget {
     //TODO test needs to be implemented in the gadgets aswell for translation?
     //This method will encrypt and decrypt
     private static String encryptDecrypt(String input) {
-        char[] key = {'A', 'K', 'M', 'F', 'S'};
+
+        char[] key = {'A', 'K', 'M'};
+
         StringBuilder output = new StringBuilder();
         for (int i = 0; i < input.length(); i++) {
             output.append((char) (input.charAt(i) ^ key[i % key.length]));
@@ -117,7 +119,7 @@ public class GadgetBasic extends Gadget {
     }
 
     @Override
-    public void setState(float newState)throws Exception {
+    public void setState(double newState)throws Exception {
         super.setState(newState);
         try {
             if (ServerConnection.getInstance().loggedInToServer) {

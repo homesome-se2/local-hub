@@ -1,0 +1,11 @@
+[
+  {
+    "pollDelaySec": 60,
+    "enable": true,
+    "lastUpdate": 1608222726346,
+    "alias": "Moe",
+    "nameID": "Moe",
+    "id": 2,
+    "lastState": 0.0
+  }
+]

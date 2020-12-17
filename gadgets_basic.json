@@ -1,0 +1,24 @@
+[
+  {
+    "id": "0",
+    "alias": "Indoor Lamp",
+    "enable" : true,
+    "type": "SWITCH",
+    "valueTemplate": "light",
+    "requestSpec" : "indoorLight",
+    "pollDelaySec": "15",
+    "port": "8084",
+    "ip": "192.168.1.19"
+  },
+  {
+    "id": "1",
+    "alias": "Outdoor Lamp",
+    "enable" : true,
+    "type": "SWITCH",
+    "valueTemplate": "light",
+    "requestSpec" : "outdoorLight",
+    "pollDelaySec": "30",
+    "port": "8084",
+    "ip": "192.168.1.19"
+  }
+]
