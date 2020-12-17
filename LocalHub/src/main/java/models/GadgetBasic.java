@@ -19,8 +19,8 @@ public class GadgetBasic extends Gadget {
      * The com.homesome.model interacted with via this class are commonly built upon Arduino based WiFi-modules.
      */
 
-    public GadgetBasic(int gadgetID, String alias, GadgetType type, String valueTemplate, String requestSpec, float state, long pollDelaySeconds, int port, String ip) {
-        super(gadgetID, alias, type, valueTemplate, state, pollDelaySeconds);
+    public GadgetBasic(int gadgetID, String alias, GadgetType type, String valueTemplate, String requestSpec, long pollDelaySeconds, int port, String ip,boolean enabled) {
+        super(gadgetID, alias, type, valueTemplate, pollDelaySeconds,enabled);
         this.port = port;
         this.ip = ip;
         this.requestSpec = requestSpec;
@@ -96,7 +96,7 @@ public class GadgetBasic extends Gadget {
     //TODO test needs to be implemented in the gadgets aswell for translation?
     //This method will encrypt and decrypt
     private static String encryptDecrypt(String input) {
-        
+
         char[] key = {'A', 'K', 'M'};
 
         StringBuilder output = new StringBuilder();
@@ -119,7 +119,7 @@ public class GadgetBasic extends Gadget {
     }
 
     @Override
-    public void setState(float newState)throws Exception {
+    public void setState(double newState)throws Exception {
         super.setState(newState);
         try {
             if (ServerConnection.getInstance().loggedInToServer) {

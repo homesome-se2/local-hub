@@ -2,8 +2,6 @@ package mainPackage;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import communicationResources.ServerConnection;
 import models.*;
@@ -11,10 +9,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Type;
 import java.util.*;
 
@@ -23,20 +18,25 @@ public class ClientApp {
     private ArrayList<GadgetGroup> gadgetGroup;
     private final Object lockObject_1;
     public volatile boolean terminate;
-    private Settings settings;
+    public Settings settings;
     private Thread pollingThread;
     private final Object lock_gadgets;
 
     //FILES
     // When run from IDE
-    //private static final String gadgetFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgets.json");
-    //private static final String automationFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/automations.json");
-    //private static final String gadgetGroupFile = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgetGroup.json");
+    private static final String gadgets_basic_fileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgets_basic.json");
+    private static final String gadgets_person_fileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgets_person.json");
+    private static final String automationFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/automations.json");
+    private static final String gadgetGroupFile = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgetGroup.json");
+    private final String settingsFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/settings.json");
+
 
     // When run as JAR on Linux
-    private static final String gadgetFileJSON = "./gadgets.json";
-    private static final String automationFileJSON = "./automations.json";
-    private static final String gadgetGroupFile = "./gadgetGroup.json";
+    //private static final String gadgets_basic_fileJSON = "./gadgets_basic.json";
+    //private static final String gadgets_person_fileJSON = "./gadgets_person.json";
+    //private static final String automationFileJSON = "./automations.json";
+    //private static final String gadgetGroupFile = "./gadgetGroup.json";
+    //private final String settingsFileJSON = "./settings.json";
     //Note: 'config.json' should be located "next to" the project folder: [config.json][PublicServer]
 
     private static ClientApp instance = null;
@@ -73,8 +73,9 @@ public class ClientApp {
             System.out.println("\nLocal Hub Running\n");
 
             //configure gadgets, automations, groups and settings
-            configSettings();
-            readGadgetFile();
+            readInSettings();
+            readGadgetBasicFile();
+            readGadgetPersonFile();
             readGroupsFile();
             //TODO read automations
 
@@ -82,7 +83,7 @@ public class ClientApp {
             pollingThread.start();
 
             //Start connection with server using websockets && process input read from server
-            if (settings.isRemoteAccessEnabled()) {
+            if (settings.isRemoteAccessEnable()) {
                 ServerConnection.getInstance().connectToServer(settings.loginString());
                 inputFromServer();
             } else {
@@ -129,6 +130,9 @@ public class ClientApp {
                         //request to alter gadget alias
                         alterGadgetAlias(Integer.parseInt(commands[2]), commands[3]);
                         break;
+                    case "503":
+                        geoLocUpdate(commands);
+                        break;
                     case "901":
                         System.out.println("ExceptionMessage: " + commands[1]);
                         break;
@@ -144,49 +148,58 @@ public class ClientApp {
 
     //==============================POLLING AND AUTOMATION HANDLING =========================
     private void pollGadgets() {
-        int nbrOfGadgets;
-        int[] gadgetKeys;
-        synchronized (lock_gadgets) {
-            gadgetKeys = new int[gadgets.size()];
-            nbrOfGadgets = gadgetKeys.length;
-            int counter = 0;
-            for (int i : gadgets.keySet()) {
-                gadgetKeys[counter] = i;
-                counter++;
-            }
-        }
+
 
         while (!terminate) {
+            int nbrOfGadgets;
+            int[] gadgetKeys;
+            synchronized (lock_gadgets) {
+                gadgetKeys = new int[gadgets.size()];
+                nbrOfGadgets = gadgetKeys.length;
+                int counter = 0;
+                for (int i : gadgets.keySet()) {
+                    gadgetKeys[counter] = i;
+                    counter++;
+                }
+            }
+
             for (int i = 0; i < nbrOfGadgets; i++) {
                 synchronized (lock_gadgets) {
                     //TODO, check automations aswell, can be implemented later
                     Gadget gadget = gadgets.get(gadgetKeys[i]);
-                    long currentMillis = System.currentTimeMillis();
-                    boolean presentNow = gadget.isPresent();
+                    if (gadget.isEnabled()) {
+                        long currentMillis = System.currentTimeMillis();
+                        boolean presentNow = gadget.isPresent();
 
-                    //Check if gadget needs polling
-                    if ((currentMillis - gadget.lastPollTime) > (gadget.pollDelaySec * 1000)) {
-                        try {
-                            gadget.poll();
-                            if (gadget.isPresent()) {
-                                gadget.setLastPollTime(System.currentTimeMillis());
-                            }
-                            //will compare the gadget.isPresent before and after the polling to see availabilityChange.
-                            if (presentNow != gadget.isPresent()) {
-                                //The gadget has either became available or it have turned unavailable
+                        //Check if gadget needs polling
+                        if ((currentMillis - gadget.lastPollTime) > (gadget.pollDelaySec * 1000)) {
+                            try {
+                                gadget.poll();
                                 if (gadget.isPresent()) {
-                                    //The gadget has become available and is present
-                                    newGadgetDetected(gadget.id);
-                                } else {
-                                    //The gadget has become unavailable and is not present
-                                    gadgetConnectionLost(gadget.id);
+                                    gadget.setLastPollTime(System.currentTimeMillis());
                                 }
+                                //will compare the gadget.isPresent before and after the polling to see availabilityChange.
+                                if (presentNow != gadget.isPresent()) {
+                                    //The gadget has either became available or it have turned unavailable
+                                    if (gadget.isPresent()) {
+                                        //The gadget has become available and is present
+                                        newGadgetDetected(gadget.id);
+                                    } else {
+                                        //The gadget has become unavailable and is not present
+                                        gadgetConnectionLost(gadget.id);
+                                    }
+                                }
+                            } catch (Exception e) {
+                                //System.out.println(e.getMessage());
                             }
-                        } catch (Exception e) {
-                            //System.out.println(e.getMessage());
                         }
                     }
                 }
+            }
+            try {
+                Thread.sleep(20);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -240,38 +253,43 @@ public class ClientApp {
     private void newClientRequestsGadgets(String cSessionID) throws Exception {
         StringBuilder msgToServer = new StringBuilder();
         int counter = 0;
-        try {
-            for (int key : gadgets.keySet()) {
-                if (gadgets.get(key).isPresent()) {
-                    msgToServer.append(gadgets.get(key).toHoSoProtocol()).append("::");
-                    counter++;
+        synchronized (lock_gadgets) {
+            try {
+                for (int key : gadgets.keySet()) {
+                    if (gadgets.get(key).isPresent() && gadgets.get(key).isEnabled()) {
+                        msgToServer.append(gadgets.get(key).toHoSoProtocol()).append("::");
+                        counter++;
+                    }
                 }
+                if (ServerConnection.getInstance().loggedInToServer) {
+                    ServerConnection.getInstance().writeToServer("303::" + cSessionID + "::" + counter + "::" + msgToServer);
+                }
+            } catch (Exception e) {
+                throw new Exception("Problem when writing to server. Command = 303.");
             }
-            if (ServerConnection.getInstance().loggedInToServer) {
-                ServerConnection.getInstance().writeToServer("303::" + cSessionID + "::" + counter + "::" + msgToServer);
-            }
-        } catch (Exception e) {
-            throw new Exception("Problem when writing to server. Command = 303.");
         }
     }
 
     //312 Alter gadget state
     private void alterGadgetState(String gadgetID, String newState) throws Exception {
         synchronized (lock_gadgets) {
-            float newFloatState;
-            try {
-                newFloatState = Float.parseFloat(newState);
-            } catch (Exception e) {
-                System.out.println("Invalid State Request");
-                return;
-            }
-            try {
-                if (gadgets.get(Integer.parseInt(gadgetID)).type == GadgetType.SWITCH || gadgets.get(Integer.parseInt(gadgetID)).type == GadgetType.SET_VALUE) {
-                    gadgets.get(Integer.parseInt(gadgetID)).alterState(newFloatState);
+            int ID = Integer.parseInt(gadgetID);
+            if (gadgets.get(ID).isEnabled()) {
+                float newFloatState;
+                try {
+                    newFloatState = Float.parseFloat(newState);
+                } catch (Exception e) {
+                    System.out.println("Invalid State Request");
+                    return;
                 }
-            } catch (Exception e) {
-                ServerConnection.getInstance().writeToServer("353::" + gadgetID);
-                System.out.println("Problem when altering state of gadget: " + gadgetID);
+                try {
+                    if (gadgets.get(ID).type == GadgetType.SWITCH || gadgets.get(ID).type == GadgetType.SET_VALUE) {
+                        gadgets.get(ID).alterState(newFloatState);
+                    }
+                } catch (Exception e) {
+                    ServerConnection.getInstance().writeToServer("353::" + gadgetID);
+                    System.out.println("Problem when altering state of gadget: " + gadgetID);
+                }
             }
         }
     }
@@ -292,39 +310,161 @@ public class ClientApp {
         }
     }
 
+    // #503
+    private void geoLocUpdate(String[] request) throws Exception {
+        String nameID = request[1];
+        double longitude = Float.parseFloat(request[2]);
+        double latitude = Float.parseFloat(request[3]);
+
+        synchronized (lock_gadgets) {
+            for (int key : gadgets.keySet()) {
+                if (gadgets.get(key) instanceof GadgetPerson) {
+                    GadgetPerson gadget = (GadgetPerson) gadgets.get(key);
+                    if (gadget.nameID.equals(nameID)) {
+                        if (gadget.isEnabled()) {
+                            gadget.longitude = longitude;
+                            gadget.latitude = latitude;
+                            double beforeState = gadget.getState(); // 1/0 = Home/Away
+                            // Verify if person (gadget) is home/away:
+                            gadget.alterState(-1); // Pass nonsense
+                            // If the state has changed:
+                            if (beforeState != gadget.getState()) {
+                                ServerConnection.getInstance().writeToServer(String.format("315::%s::%s", gadget.id, gadget.getState()));
+                            }
+                        }
+                        return;
+                    }
+                }
+            }
+            // If gadget is not in list: Add it
+            int gadgetID = generateGadgetID();
+            GadgetPerson newGadget = new GadgetPerson(gadgetID, nameID);
+            newGadget.longitude = longitude;
+            newGadget.latitude = latitude;
+            newGadget.setPresent(true);
+            newGadget.alterState(-1); // Pass nonsense
+            gadgets.put(gadgetID, newGadget);
+
+            //Write new gadget to JSON
+            writeGadgetPersonToFile(newGadget);
+            //Send new gadget to clients = New gadget detected
+            ServerConnection.getInstance().writeToServer("351::" + newGadget.toHoSoProtocol());
+
+        }
+    }
+
+    // Used when new gadgets are added via GadgetAdder or GPS.
+    // If client has gadgets with IDs: [1, 2, 152] -> The new gadget will get ID 153.
+    private int generateGadgetID() {
+        synchronized (lock_gadgets) {
+            int newID = 0;
+            for (int gadgetID : gadgets.keySet()) {
+                if (gadgetID >= newID) {
+                    newID = gadgetID + 1;
+                }
+            }
+            return newID;
+        }
+    }
+
     //========================= FILE HANDLING ===============================================
-    private void readGadgetFile() throws Exception {
+    private void readGadgetBasicFile() throws Exception {
         try {
             JSONParser parser = new JSONParser();
-            JSONArray array = (JSONArray) parser.parse(new FileReader(gadgetFileJSON));
+            JSONArray array = (JSONArray) parser.parse(new FileReader(gadgets_basic_fileJSON));
             for (Object object : array) {
                 JSONObject gadget = (JSONObject) object;
-                if (gadget.get("enable").equals("true")) {
-                    int id = Integer.parseInt(String.valueOf(gadget.get("id")));
-                    String alias = (String) gadget.get("alias");
-                    GadgetType type = GadgetType.valueOf((String) gadget.get("type"));
-                    String valueTemplate = (String) gadget.get("valueTemplate");
-                    String requestSpec = (String) gadget.get("requestSpec");
-                    long pollDelaySeconds = Long.parseLong(String.valueOf(gadget.get("pollDelaySec")));
-                    int port = Integer.parseInt(String.valueOf(gadget.get("port")));
-                    String ip = (String) gadget.get("ip");
 
-                    GadgetBasic gadgetBasic = new GadgetBasic(id, alias, type, valueTemplate, requestSpec, -1, pollDelaySeconds, port, ip);
-                    gadgets.put(id, gadgetBasic);
-                }
+                int id = Integer.parseInt(String.valueOf(gadget.get("id")));
+                String alias = (String) gadget.get("alias");
+                GadgetType type = GadgetType.valueOf((String) gadget.get("type"));
+                String valueTemplate = (String) gadget.get("valueTemplate");
+                String requestSpec = (String) gadget.get("requestSpec");
+                long pollDelaySeconds = Long.parseLong(String.valueOf(gadget.get("pollDelaySec")));
+                int port = Integer.parseInt(String.valueOf(gadget.get("port")));
+                String ip = (String) gadget.get("ip");
+                boolean enabled = (Boolean) gadget.get("enable");
+
+                GadgetBasic gadgetBasic = new GadgetBasic(id, alias, type, valueTemplate, requestSpec, pollDelaySeconds, port, ip, enabled);
+                gadgets.put(id, gadgetBasic);
             }
             printGadgets();
         } catch (Exception e) {
-            throw new Exception("Problem reading gadgets.json");
+            e.printStackTrace();
+            throw new Exception("Problem reading gadgets_basic.json");
+        }
+    }
+
+    private void readGadgetPersonFile() throws Exception {
+        try {
+            JSONParser parser = new JSONParser();
+            JSONArray array = (JSONArray) parser.parse(new FileReader(gadgets_person_fileJSON));
+            for (Object object : array) {
+                JSONObject gadget = (JSONObject) object;
+
+                int id = Integer.parseInt(String.valueOf(gadget.get("id")));
+                String alias = (String) gadget.get("alias");
+                long pollDelaySeconds = Long.parseLong(String.valueOf(gadget.get("pollDelaySec")));
+                String nameID = (String) gadget.get("nameID");
+                long lastUpdate = (Long) gadget.get("lastUpdate");
+                double lastState = (Double) gadget.get("lastState");
+                boolean enabled = (Boolean) gadget.get("enable");
+
+                GadgetPerson gadgetPerson = new GadgetPerson(id, alias, pollDelaySeconds, nameID, lastUpdate, lastState, enabled);
+                gadgets.put(id, gadgetPerson);
+
+            }
+            printGadgets();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new Exception("Problem reading gadgets_Person.json");
+        }
+    }
+
+    private void writeGadgetPersonToFile(GadgetPerson gadgetPerson) throws Exception {
+        JSONObject gadget = new JSONObject();
+        gadget.put("id", gadgetPerson.id);
+        gadget.put("alias", gadgetPerson.alias);
+        gadget.put("pollDelaySec", gadgetPerson.pollDelaySec);
+        gadget.put("nameID", gadgetPerson.nameID);
+        gadget.put("lastUpdate", gadgetPerson.lastUpdate);
+        gadget.put("lastState", gadgetPerson.getState());
+        gadget.put("enable", gadgetPerson.isEnabled());
+
+        try {
+            JSONParser parser = new JSONParser();
+            JSONArray array = (JSONArray) parser.parse(new FileReader(gadgets_person_fileJSON));
+            array.add(gadget);
+
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            String prettyJson = gson.toJson(array);
+            try (FileWriter writer = new FileWriter(gadgets_person_fileJSON)) {
+                writer.write(prettyJson);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new Exception("Problem writing gadgets_person.json");
+        }
+
+    }
+
+
+    private void readInSettings() throws Exception{
+        try (FileReader reader = new FileReader(settingsFileJSON)){
+            settings = new Gson().fromJson(reader, Settings.class);
+            System.out.println("test remote access " + settings.isRemoteAccessEnable());
+        } catch (FileNotFoundException e) {
+            throw new Exception("Unable to read settings from config.json");
         }
     }
 
     private void alterAliasInJson(int gadgetID, String newAlias) throws Exception {
         String fileName = "";
         if (gadgets.get(gadgetID) instanceof GadgetBasic) {
-            fileName = gadgetFileJSON;
+            fileName = gadgets_basic_fileJSON;
+        } else if (gadgets.get(gadgetID) instanceof GadgetPerson) {
+            fileName = gadgets_person_fileJSON;
         }
-        // else instance of gadgetPerson.
 
         try {
             JSONParser parser = new JSONParser();
@@ -345,10 +485,6 @@ public class ClientApp {
             e.printStackTrace();
             throw new Exception("Problem updating alias in gadgets.json");
         }
-    }
-
-    private void configSettings() throws Exception {
-        this.settings = Settings.getInstance();
     }
 
     private void readAutomationFile() throws Exception {

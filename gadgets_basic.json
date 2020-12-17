@@ -2,7 +2,7 @@
   {
     "id": "0",
     "alias": "Indoor Lamp",
-    "enable" : "true",
+    "enable" : true,
     "type": "SWITCH",
     "valueTemplate": "light",
     "requestSpec" : "indoorLight",
@@ -13,7 +13,7 @@
   {
     "id": "1",
     "alias": "Outdoor Lamp",
-    "enable" : "true",
+    "enable" : true,
     "type": "SWITCH",
     "valueTemplate": "light",
     "requestSpec" : "outdoorLight",
