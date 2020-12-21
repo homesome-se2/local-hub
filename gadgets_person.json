@@ -2,10 +2,10 @@
   {
     "pollDelaySec": 60,
     "enable": true,
-    "lastUpdate": 1608222726346,
+    "lastUpdate": "2020-12-21 15:41",
     "alias": "Moe",
     "nameID": "Moe",
-    "id": 2,
+    "id": 0,
     "lastState": 0.0
   }
 ]

@@ -2,6 +2,9 @@ package models;
 
 import mainPackage.ClientApp;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public class GadgetPerson extends Gadget {
 
     public final String nameID; // Corresponds to the user name logged in to the Android device
@@ -20,10 +23,10 @@ public class GadgetPerson extends Gadget {
     }
 
     // Gadget instantiated via json file at hub boot.
-    public GadgetPerson(int gadgetID, String alias, long pollDelaySec, String nameID, long lastUpdate, double lastState, boolean enabled) throws Exception {
+    public GadgetPerson(int gadgetID, String alias, long pollDelaySec, String nameID, String lastUpdate, double lastState, boolean enabled) throws Exception {
         super(gadgetID, alias, GadgetType.BINARY_SENSOR, "person", pollDelaySec, enabled);
         this.nameID = nameID;
-        this.lastUpdate = lastUpdate;
+        this.lastUpdate = simpleDateToMillis(lastUpdate);
         latitude = 0;
         longitude = 0;
         setState(lastState);
@@ -72,4 +75,20 @@ public class GadgetPerson extends Gadget {
         return null;
     }
 
+    public String lastUpdateToSimpleDate() {
+        // Millis to date
+        Date resultDate = new Date(lastUpdate);
+        String pattern = "yyyy-MM-dd HH:mm";
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+        return simpleDateFormat.format(resultDate);
+    }
+
+    private long simpleDateToMillis(String date){
+        try {
+            Date simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm").parse(date);
+            return simpleDateFormat.getTime();
+        }catch (Exception e){
+            return 0;
+        }
+    }
 }
