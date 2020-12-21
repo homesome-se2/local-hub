@@ -1,5 +1,7 @@
 # HomeSome specifics
 # config.json files etc..
+*.json
+
 
 # Compiler output (IntelliJ)
 **/out/
