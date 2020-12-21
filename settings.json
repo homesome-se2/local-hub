@@ -2,8 +2,8 @@
 	"remoteAccessEnable" : true,
 	"remoteID" : "103",
 	"remotePassword" : "h64jd6kgf74hn5",
-	"alias" : "Moues House",
-        "hubLongitude" : 56.05000055319993, 
-        "hubLatitude" : 14.149541206570158,
-        "hubRadius" : 20
+	"alias" : "Moes House",
+    "hubLongitude" : 56.05000055319993, 
+    "hubLatitude" : 14.149541206570158,
+    "hubRadius" : 20
 }

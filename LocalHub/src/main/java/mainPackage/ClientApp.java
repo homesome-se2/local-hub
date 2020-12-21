@@ -24,19 +24,19 @@ public class ClientApp {
 
     //FILES
     // When run from IDE
-    private static final String gadgets_basic_fileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgets_basic.json");
-    private static final String gadgets_person_fileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgets_person.json");
-    private static final String automationFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/automations.json");
-    private static final String gadgetGroupFile = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgetGroup.json");
-    private final String settingsFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/settings.json");
+    //private static final String gadgets_basic_fileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgets_basic.json");
+    //private static final String gadgets_person_fileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgets_person.json");
+    //private static final String automationFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/automations.json");
+    //private static final String gadgetGroupFile = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgetGroup.json");
+    //private final String settingsFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/settings.json");
 
 
     // When run as JAR on Linux
-    //private static final String gadgets_basic_fileJSON = "./gadgets_basic.json";
-    //private static final String gadgets_person_fileJSON = "./gadgets_person.json";
-    //private static final String automationFileJSON = "./automations.json";
-    //private static final String gadgetGroupFile = "./gadgetGroup.json";
-    //private final String settingsFileJSON = "./settings.json";
+    private static final String gadgets_basic_fileJSON = "./gadgets_basic.json";
+    private static final String gadgets_person_fileJSON = "./gadgets_person.json";
+    private static final String automationFileJSON = "./automations.json";
+    private static final String gadgetGroupFile = "./gadgetGroup.json";
+    private final String settingsFileJSON = "./settings.json";
     //Note: 'config.json' should be located "next to" the project folder: [config.json][PublicServer]
 
     private static ClientApp instance = null;
@@ -79,6 +79,8 @@ public class ClientApp {
             readGroupsFile();
             //TODO read automations
 
+            printGadgets();
+
             //Start polling thread (handles automations aswell)
             pollingThread.start();
 
@@ -98,6 +100,7 @@ public class ClientApp {
         synchronized (lockObject_1) {
             if (!terminate) {
                 terminate = true;
+                updatePersonFile();
                 ServerConnection.getInstance().closeConnection();
             }
         }
@@ -148,8 +151,6 @@ public class ClientApp {
 
     //==============================POLLING AND AUTOMATION HANDLING =========================
     private void pollGadgets() {
-
-
         while (!terminate) {
             int nbrOfGadgets;
             int[] gadgetKeys;
@@ -169,7 +170,8 @@ public class ClientApp {
                     Gadget gadget = gadgets.get(gadgetKeys[i]);
                     if (gadget.isEnabled()) {
                         long currentMillis = System.currentTimeMillis();
-                        boolean presentNow = gadget.isPresent();
+                        boolean presentBefore = gadget.isPresent();
+                        double stateBefore = gadget.getState();
 
                         //Check if gadget needs polling
                         if ((currentMillis - gadget.lastPollTime) > (gadget.pollDelaySec * 1000)) {
@@ -178,8 +180,9 @@ public class ClientApp {
                                 if (gadget.isPresent()) {
                                     gadget.setLastPollTime(System.currentTimeMillis());
                                 }
+
                                 //will compare the gadget.isPresent before and after the polling to see availabilityChange.
-                                if (presentNow != gadget.isPresent()) {
+                                if (presentBefore != gadget.isPresent()) {
                                     //The gadget has either became available or it have turned unavailable
                                     if (gadget.isPresent()) {
                                         //The gadget has become available and is present
@@ -187,6 +190,10 @@ public class ClientApp {
                                     } else {
                                         //The gadget has become unavailable and is not present
                                         gadgetConnectionLost(gadget.id);
+                                    }
+                                } else if (gadget.isPresent()){
+                                    if (gadget.getState() != stateBefore) {
+                                        newStateOfGadgetDetected(gadget.id, gadget.getState());
                                     }
                                 }
                             } catch (Exception e) {
@@ -205,6 +212,13 @@ public class ClientApp {
     }
 
     //==============================HUB ---> PUBLIC SERVER ==================================
+    //315 new state of gadget
+    private void newStateOfGadgetDetected(int id, double newState) {
+        if (ServerConnection.getInstance().loggedInToServer) {
+            ServerConnection.getInstance().writeToServer("315::" + id + "::" + newState);
+        }
+    }
+
     //351 new gadget detected
     private void newGadgetDetected(int gadgetID) throws Exception {
         try {
@@ -285,6 +299,7 @@ public class ClientApp {
                 try {
                     if (gadgets.get(ID).type == GadgetType.SWITCH || gadgets.get(ID).type == GadgetType.SET_VALUE) {
                         gadgets.get(ID).alterState(newFloatState);
+                        ServerConnection.getInstance().writeToServer("315::" + ID + "::" + gadgets.get(ID).getState());
                     }
                 } catch (Exception e) {
                     ServerConnection.getInstance().writeToServer("353::" + gadgetID);
@@ -312,6 +327,7 @@ public class ClientApp {
 
     // #503
     private void geoLocUpdate(String[] request) throws Exception {
+        //TODO when writing to file make sure the lastUdate is in simpleDateFormat.
         String nameID = request[1];
         double longitude = Float.parseFloat(request[2]);
         double latitude = Float.parseFloat(request[3]);
@@ -320,7 +336,7 @@ public class ClientApp {
             for (int key : gadgets.keySet()) {
                 if (gadgets.get(key) instanceof GadgetPerson) {
                     GadgetPerson gadget = (GadgetPerson) gadgets.get(key);
-                    if (gadget.nameID.equals(nameID)) {
+                    if (gadget.nameID.equalsIgnoreCase(nameID)) {
                         if (gadget.isEnabled()) {
                             gadget.longitude = longitude;
                             gadget.latitude = latitude;
@@ -388,7 +404,6 @@ public class ClientApp {
                 GadgetBasic gadgetBasic = new GadgetBasic(id, alias, type, valueTemplate, requestSpec, pollDelaySeconds, port, ip, enabled);
                 gadgets.put(id, gadgetBasic);
             }
-            printGadgets();
         } catch (Exception e) {
             e.printStackTrace();
             throw new Exception("Problem reading gadgets_basic.json");
@@ -406,15 +421,13 @@ public class ClientApp {
                 String alias = (String) gadget.get("alias");
                 long pollDelaySeconds = Long.parseLong(String.valueOf(gadget.get("pollDelaySec")));
                 String nameID = (String) gadget.get("nameID");
-                long lastUpdate = (Long) gadget.get("lastUpdate");
+                String lastUpdate = (String) gadget.get("lastUpdate");
                 double lastState = (Double) gadget.get("lastState");
                 boolean enabled = (Boolean) gadget.get("enable");
 
                 GadgetPerson gadgetPerson = new GadgetPerson(id, alias, pollDelaySeconds, nameID, lastUpdate, lastState, enabled);
                 gadgets.put(id, gadgetPerson);
-
             }
-            printGadgets();
         } catch (Exception e) {
             e.printStackTrace();
             throw new Exception("Problem reading gadgets_Person.json");
@@ -427,7 +440,7 @@ public class ClientApp {
         gadget.put("alias", gadgetPerson.alias);
         gadget.put("pollDelaySec", gadgetPerson.pollDelaySec);
         gadget.put("nameID", gadgetPerson.nameID);
-        gadget.put("lastUpdate", gadgetPerson.lastUpdate);
+        gadget.put("lastUpdate", gadgetPerson.lastUpdateToSimpleDate());
         gadget.put("lastState", gadgetPerson.getState());
         gadget.put("enable", gadgetPerson.isEnabled());
 
@@ -445,14 +458,11 @@ public class ClientApp {
             e.printStackTrace();
             throw new Exception("Problem writing gadgets_person.json");
         }
-
     }
 
-
-    private void readInSettings() throws Exception{
-        try (FileReader reader = new FileReader(settingsFileJSON)){
+    private void readInSettings() throws Exception {
+        try (FileReader reader = new FileReader(settingsFileJSON)) {
             settings = new Gson().fromJson(reader, Settings.class);
-            System.out.println("test remote access " + settings.isRemoteAccessEnable());
         } catch (FileNotFoundException e) {
             throw new Exception("Unable to read settings from config.json");
         }
@@ -533,6 +543,40 @@ public class ClientApp {
                         "State: " + gadgets.get(key).getState() + "\n" + "Present: " + gadgets.get(key).isPresent());
             }
             System.out.println("====================");
+        }
+    }
+
+    //========================= SHUT DOWN SEQ ===============================================
+    private void updatePersonFile() {
+        System.out.println("Updating personfile");
+        try {
+            JSONParser parser = new JSONParser();
+            JSONArray array = (JSONArray) parser.parse(new FileReader(gadgets_person_fileJSON));
+
+            for (int gadgetID : gadgets.keySet()) {
+                if (gadgets.get(gadgetID) instanceof GadgetPerson) {
+                    double lastState = gadgets.get(gadgetID).getState();
+                    String lastUpdate = ((GadgetPerson) gadgets.get(gadgetID)).lastUpdateToSimpleDate();
+
+                    for (Object object : array) {
+                        JSONObject gadget = (JSONObject) object;
+                        if ((Long) gadget.get("id") == gadgetID) {
+                            gadget.put("lastState", lastState);
+                            gadget.put("lastUpdate", lastUpdate);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            String prettyJson = gson.toJson(array);
+            try (FileWriter writer = new FileWriter(gadgets_person_fileJSON)) {
+                writer.write(prettyJson);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Problem updating personFile");
         }
     }
 }

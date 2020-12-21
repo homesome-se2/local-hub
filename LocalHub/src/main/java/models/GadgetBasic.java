@@ -34,7 +34,7 @@ public class GadgetBasic extends Gadget {
             String[] splittedResponse = response.split("::");
             //if state changed
             if (splittedResponse[0].equalsIgnoreCase("314")) {
-                checkStateChange(splittedResponse[1]);
+                setState(Float.parseFloat(splittedResponse[1]));
                 setPresent(true);
                 return;
             }
@@ -106,28 +106,9 @@ public class GadgetBasic extends Gadget {
         return output.toString();
     }
 
-    private void checkStateChange(String newState) throws Exception{
-        try {
-            if (Float.parseFloat(newState) != getState()) {
-                setState(Float.parseFloat(newState));
-            } else {
-                //ignore, no change of state in gadget
-            }
-        }catch (Exception e){
-            throw new Exception(e.getMessage());
-        }
-    }
-
     @Override
     public void setState(double newState)throws Exception {
         super.setState(newState);
-        try {
-            if (ServerConnection.getInstance().loggedInToServer) {
-                ServerConnection.getInstance().writeToServer("315::" + this.id + "::" + newState);
-            }
-        }catch (Exception e){
-            throw new Exception("Problem when writing to server. Command = 315.");
-        }
     }
 
     private void closeConnections() {
