@@ -5,7 +5,7 @@
     "enable" : "true",
     "type": "SWITCH",
     "valueTemplate": "light",
-    "requestSpec" : "indoorLight",
+    "requestSpec" : "indoorLamp",
     "pollDelaySec": "15",
     "port": "8085",
     "ip": "192.168.0.105"
@@ -16,8 +16,8 @@
     "enable" : "true",
     "type": "SWITCH",
     "valueTemplate": "light",
-    "requestSpec" : "outdoorLight",
-    "pollDelaySec": "30",
+    "requestSpec" : "outdoorLamp",
+    "pollDelaySec": "15",
     "port": "8085",
     "ip": "192.168.0.105"
   }
@@ -27,7 +27,7 @@
     "enable" : "true",
     "type": "SWITCH",
     "valueTemplate": "light",
-    "requestSpec" : "kitchenLight",
+    "requestSpec" : "kitchenLamp",
     "pollDelaySec": "15",
     "port": "8085",
     "ip": "192.168.0.105"
@@ -38,8 +38,8 @@
     "enable" : "true",
     "type": "SWITCH",
     "valueTemplate": "light",
-    "requestSpec" : "garageLight",
-    "pollDelaySec": "30",
+    "requestSpec" : "garageLamp",
+    "pollDelaySec": "15",
     "port": "8085",
     "ip": "192.168.0.105"
   }

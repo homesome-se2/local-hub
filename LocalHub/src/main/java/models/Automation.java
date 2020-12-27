@@ -15,6 +15,7 @@ public class Automation {
     private boolean enabled;
     private Trigger trigger;
     private Delay delay;
+    private boolean running = false;
 
     public Automation(String name, boolean enabled, Trigger trigger, Delay delay) {
         this.name = name;
@@ -53,5 +54,13 @@ public class Automation {
 
     public void setDelay(Delay delay) {
         this.delay = delay;
+    }
+
+    public boolean isRunning() {
+        return running;
+    }
+
+    public void setRunning(boolean running) {
+        this.running = running;
     }
 }

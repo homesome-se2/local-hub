@@ -15,6 +15,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class ClientApp {
@@ -172,7 +174,6 @@ public class ClientApp {
                             if (gadget.isPresent()) {
                                 gadget.setLastPollTime(System.currentTimeMillis());
                             }
-
                             //will compare the gadget.isPresent before and after the polling to see availabilityChange.
                             if (presentNow != gadget.isPresent()) {
                                 //The gadget has either became available or it have turned unavailable
@@ -183,6 +184,7 @@ public class ClientApp {
                                     //The gadget has become unavailable and is not present
                                     gadgetConnectionLost(gadget.id);
                                 }
+
                             }
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -205,13 +207,14 @@ public class ClientApp {
             return;
         }
         //Assign the current gadgets automation to automation
-
         Automation automation = automationsList.get(gadgetsWithAutomations.indexOf(gadget.id));
-        //if not enable, return
+        //if not enabled, return
         if (!automation.isEnabled()) {
             return;
         }
+        //Selects based on trigger type
         if (automation.getTrigger().getType().equals("event")) {
+            //Selects based on trigger condition
             switch (automation.getTrigger().getStateCondition()) {
                 case "equal_to":
                     if (automation.getTrigger().getState() == gadget.getState()) {
@@ -238,32 +241,32 @@ public class ClientApp {
 
     //Method to do actions from automations
     public void doAction(Automation automation, Gadget gadget) throws Exception {
-        //Iterates through all the actions for the automation
-        if (timerRunning) {
-            return;
-        }
-        System.out.println("doing automation: " + automation.getName());
-        Timer timer = new Timer();
-        System.out.println("Delaying automation for (HH:MM:SS): " + automation.getDelay().getHours()
-                + "::" + automation.getDelay().getMinutes() + "::" + automation.getDelay().getSeconds());
-        timer.schedule(new TimerTask() {
-            @Override
+
+        class AutomationTask extends TimerTask {
             public void run() {
                 List<Action> actions = actionMap.get(gadget.id);
                 for (Action action : actions) {
                     try {
+                        System.out.println(automation + "ending automation task at: " + new Date());
                         alterGadgetState(Integer.toString(action.getGadgetID()), Float.toString(action.getState()));
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                    System.out.println("Automatically changed " + action.getGadgetID() + " To State: " + action.getState());
-
+                    automation.setRunning(false);
                 }
-                timerRunning = false;
             }
-        }, automation.getDelay().timeInMills());
-        timerRunning = true;
+        }
 
+        Date date = new Date(System.currentTimeMillis() + automation.getDelay().timeInMills());//task Execution date
+        Timer timer = new Timer(); // creating timer
+        TimerTask task = new AutomationTask(); // creating timer task
+
+        if (automation.getTrigger().getState() == gadget.getState() && !automation.isRunning()){
+            System.out.println(automation + " starting automation at: " + new Date());
+            automation.setRunning(true);
+            timer.schedule(task, date);// scheduling the task if trigger is on
+
+        }
     }
 
     //==============================HUB ---> PUBLIC SERVER ==================================
@@ -375,9 +378,10 @@ public class ClientApp {
         JSONParser parser = new JSONParser();
 
         JSONArray array = (JSONArray) parser.parse(new FileReader(automationFileJSON));
-        ArrayList<Action> actions = new ArrayList<>();
+       // ArrayList<Action> actions = new ArrayList<>();
 
         for (Object object : array) {
+            ArrayList<Action> actions = new ArrayList<>();
             JSONObject automations = (JSONObject) object;
             String name = (String) automations.get("name");
             boolean enabled = (Boolean) automations.get("enabled");
