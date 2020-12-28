@@ -14,8 +14,8 @@ import org.json.simple.parser.JSONParser;
 
 import java.io.*;
 import java.lang.reflect.Type;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class ClientApp {
@@ -245,43 +245,43 @@ public class ClientApp {
             //Selects based on trigger condition
             switch (automation.getTrigger().getStateCondition()) {
                 case "equal_to":
-                    if (automation.getTrigger().getState() == gadget.getState()) {
-                        doAction(automation, gadget);
+                    if (Float.parseFloat(automation.getTrigger().getState()) == gadget.getState()) {
+                        doEvent(automation, gadget);
                     }
                     break;
                 case "lower_than":
-                    if (automation.getTrigger().getState() > gadget.getState()) {
-                        doAction(automation, gadget);
+                    if (Float.parseFloat(automation.getTrigger().getState()) > gadget.getState()) {
+                        doEvent(automation, gadget);
                     }
                     break;
                 case "high_than":
-                    if (automation.getTrigger().getState() < gadget.getState()) {
-                        doAction(automation, gadget);
+                    if (Float.parseFloat(automation.getTrigger().getState()) < gadget.getState()) {
+                        doEvent(automation, gadget);
                     }
                     break;
                 default:
                     System.out.println("wrong state condition: " + automation.getTrigger().getStateCondition());
             }
-        } else if (automation.getTrigger().getType().equals("timestamp")) {
-            //Do stuff with timestamp
+        } else if (automation.getTrigger().getType().equals("time")) {
+            doTime(automation, gadget);
         }
     }
 
     //Method to do actions from automations
-    public void doAction(Automation automation, Gadget gadget) throws Exception {
-
+    public void doEvent(Automation automation, Gadget gadget) throws Exception {
+            List<Action> actions = actionMap.get(gadget.id);
         class AutomationTask extends TimerTask {
             public void run() {
-                List<Action> actions = actionMap.get(gadget.id);
+
                 for (Action action : actions) {
                     try {
-                        System.out.println(automation + "ending automation task at: " + new Date());
                         alterGadgetState(Integer.toString(action.getGadgetID()), Float.toString(action.getState()));
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                    automation.setRunning(false);
                 }
+                automation.setRunning(false);
+                System.out.println(automation + " Ending automation task at: " + new Date());
             }
         }
 
@@ -289,12 +289,35 @@ public class ClientApp {
         Timer timer = new Timer(); // creating timer
         TimerTask task = new AutomationTask(); // creating timer task
 
-        if (automation.getTrigger().getState() == gadget.getState() && !automation.isRunning()){
-            System.out.println(automation + " starting automation at: " + new Date());
+        if (!automation.isRunning()){
+            System.out.println(automation + " Starting automation at: " + new Date());
             automation.setRunning(true);
             timer.schedule(task, date);// scheduling the task if trigger is on
 
         }
+    }
+
+    //method for timed automation
+    private void doTime(Automation automation, Gadget gadget){
+
+        DateTimeFormatter myFormatObj = DateTimeFormatter.ofPattern("HH:mm:ss"); //Date time formatter
+        LocalTime myTimeObj = LocalTime.now(); //Current time
+        LocalTime autoTime = LocalTime.parse(automation.getTrigger().getState(), myFormatObj);//Time of which automations should trigger
+
+        if (myTimeObj.isAfter(autoTime) && myTimeObj.isBefore(autoTime.plusSeconds(gadget.pollDelaySec))){
+            //checks to see if current time is after scheduled time and if its before the scheduled time plus poll delay
+            //If within this window, automation will trigger
+            List<Action> actions = actionMap.get(gadget.id);
+            for (Action action : actions) {
+                try {
+                    System.out.println(automation + "ending automation task at: " + new Date());
+                    alterGadgetState(Integer.toString(action.getGadgetID()), Float.toString(action.getState()));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
     }
 
     //==============================HUB ---> PUBLIC SERVER ==================================
@@ -600,7 +623,7 @@ public class ClientApp {
             Map.Entry pair = itr1.next();
             String stateCondition = (String) pair.getValue();
             pair = itr1.next();
-            float state = Float.parseFloat((String) pair.getValue());
+            String state = (String) pair.getValue();
             pair = itr1.next();
             String type = (String) pair.getValue();
             pair = itr1.next();

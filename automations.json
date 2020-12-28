@@ -53,4 +53,50 @@
 	 }
 	 ]
   }
+    {
+    "name": "NightLightOn",
+	"enabled": true,
+	"trigger": 
+	{
+		"type": "time",
+		"gadget_id": "0",
+		"state_condition": "equal_to"
+		"state": "10:00:00"
+	},
+	"delay":
+	{
+		"hours": "0",
+		"minutes": "0",
+		"seconds": "0"
+	},
+	"action": [
+	 {
+	 "gadget_id": "0",
+	 "state": "1"
+	 },
+	 ]
+  }
+      {
+    "name": "NightLightOff",
+	"enabled": true,
+	"trigger": 
+	{
+		"type": "time",
+		"gadget_id": "0",
+		"state_condition": "equal_to"
+		"state": "10:01:00"
+	},
+	"delay":
+	{
+		"hours": "0",
+		"minutes": "0",
+		"seconds": "0"
+	},
+	"action": [
+	 {
+	 "gadget_id": "0",
+	 "state": "0"
+	 },
+	 ]
+  }
 ]

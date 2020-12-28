@@ -4,10 +4,10 @@ public class Trigger {
     private String type;
     private int gadgetID;
     private String stateCondition;
-    private float state;
+    private String state;
 
 
-    public Trigger(String type, int gadgetID, String stateCondition, float state) {
+    public Trigger(String type, int gadgetID, String stateCondition, String state) {
         this.type = type;
         this.gadgetID = gadgetID;
         this.stateCondition = stateCondition;
@@ -38,11 +38,11 @@ public class Trigger {
         this.stateCondition = stateCondition;
     }
 
-    public float getState() {
+    public String getState() {
         return state;
     }
 
-    public void setState(float state) {
+    public void setState(String state) {
         this.state = state;
     }
 }
