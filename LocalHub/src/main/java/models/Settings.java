@@ -1,43 +1,16 @@
 package models;
 
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-
 public class Settings {
-    private final String settingsFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/settings.json");
-    private boolean remoteAccessEnabled;
+
+    private boolean remoteAccessEnable;
     private int remoteID;
     private String remotePassword;
     private String alias;
+    public float hubLongitude;
+    public float hubLatitude;
+    public float hubRadius;
 
-    //Singelton
-    private static Settings instance = null;
-
-    public static Settings getInstance() throws IOException, ParseException {
-        if (instance == null) {
-            instance = new Settings();
-        }
-        return instance;
-    }
-
-    private Settings() throws IOException, ParseException {
-        configSettings();
-    }
-
-    private void configSettings() throws IOException, ParseException {
-        JSONParser parser = new JSONParser();
-
-        JSONObject object = (JSONObject) parser.parse(new FileReader(settingsFileJSON));
-        this.remoteAccessEnabled = Boolean.valueOf((String) object.get("remoteAccessEnable"));
-        this.remoteID = Integer.valueOf((String) object.get("remoteID"));
-        this.remotePassword = (String) object.get("remotePassword");
-        this.alias = (String) object.get("alias");
-    }
+    public Settings(){}
 
     public String loginString() {
         return "120::" + String.valueOf(remoteID) + "::" + remotePassword + "::" + alias;
@@ -55,8 +28,8 @@ public class Settings {
         return alias;
     }
 
-    public boolean isRemoteAccessEnabled() {
-        return remoteAccessEnabled;
+    public boolean isRemoteAccessEnable() {
+        return remoteAccessEnable;
     }
 
     @Override

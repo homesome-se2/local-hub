@@ -19,50 +19,54 @@ public class GadgetBasic extends Gadget {
      * The com.homesome.model interacted with via this class are commonly built upon Arduino based WiFi-modules.
      */
 
-    public GadgetBasic(int gadgetID, String alias, GadgetType type, String valueTemplate, String requestSpec, float state, long pollDelaySeconds, int port, String ip) {
-        super(gadgetID, alias, type, valueTemplate, state, pollDelaySeconds);
+    public GadgetBasic(int gadgetID, String alias, GadgetType type, String valueTemplate, String requestSpec, long pollDelaySeconds, int port, String ip,boolean enabled) {
+        super(gadgetID, alias, type, valueTemplate, pollDelaySeconds,enabled);
         this.port = port;
         this.ip = ip;
         this.requestSpec = requestSpec;
     }
+
     @Override
     public void poll() {
         try {
             String response = sendCommand("{\"command\":341,\"requestSpec\":\"" + requestSpec + "\"}");
 
-            String splittedResponse[] = response.split("::");
+            String[] splittedResponse = response.split("::");
             //if state changed
             if (splittedResponse[0].equalsIgnoreCase("314")) {
-                checkStateChange(splittedResponse[1]);
-                System.out.println("STATE: " + splittedResponse[1]);
+                setState(Float.parseFloat(splittedResponse[1]));
                 setPresent(true);
                 return;
             }
         } catch (Exception e) {
-
+            setPresent(false);
         }
-        System.out.println("Gadget: " + this.id + " is not present..");
-        setPresent(false);
     }
 
     @Override
-    public void alterState(float requestedState) {
+    public void alterState(float requestedState) throws Exception{
         try {
-            System.out.println("Alter state of gadget: " + this.id);
+            if (type == GadgetType.SWITCH){
+                requestedState = requestedState == 1 ? 1 : 0;
+            }
+
             String response = sendCommand("{\"command\":313,\"requestSpec\":" + "\"" + requestSpec + "\",\"requestedState\":" + requestedState + "}");
 
-            String splittedResponse[] = response.split("::");
+            String[] splittedResponse = response.split("::");
             //if state changed
             if (splittedResponse[0].equalsIgnoreCase("314")) {
-                checkStateChange(splittedResponse[1]);
+                setState(Float.parseFloat(splittedResponse[1]));
+            } else {
+                setState(getState());
             }
         } catch (Exception e) {
-
+            setPresent(false);
+            throw new Exception();
         }
     }
 
     @Override
-    protected String sendCommand(String command) throws IOException {
+    protected String sendCommand(String command) throws Exception {
         try {
             this.socket = new Socket();
             this.socket.connect(new InetSocketAddress(this.ip, this.port), 1500);
@@ -80,37 +84,31 @@ public class GadgetBasic extends Gadget {
             //return encryptDecrypt(input.readLine());
             return input.readLine();
         } catch (Exception e) {
-            return null;
+            throw new Exception("Unable to connect to gadget.");
         } finally {
-            this.output.close();
-            this.output.close();
+            if (this.socket != null){
+                this.socket.close();
+            }
         }
     }
 
+
+    //TODO test needs to be implemented in the gadgets aswell for translation?
     //This method will encrypt and decrypt
     private static String encryptDecrypt(String input) {
-        char[] key = {'A', 'K', 'M','F','S'};
+
+        char[] key = {'A', 'K', 'M'};
+
         StringBuilder output = new StringBuilder();
-        for(int i = 0 ; i < input.length() ; i++) {
-            output.append((char)(input.charAt(i) ^ key[i % key.length]));
+        for (int i = 0; i < input.length(); i++) {
+            output.append((char) (input.charAt(i) ^ key[i % key.length]));
         }
         return output.toString();
     }
 
-    private void checkStateChange(String newState) {
-        if (Float.parseFloat(newState) != getState()) {
-            setState(Float.parseFloat(newState));
-        } else {
-            //ignore, no change of state in gadget
-        }
-    }
-
     @Override
-    public void setState(float newState) {
+    public void setState(double newState)throws Exception {
         super.setState(newState);
-        if (ServerConnection.getInstance().loggedInToServer){
-            ServerConnection.getInstance().writeToServer("315::" + this.id + "::" + newState);
-        }
     }
 
     private void closeConnections() {
@@ -128,4 +126,5 @@ public class GadgetBasic extends Gadget {
             System.out.println("Problem closing gadget connections");
         }
     }
+
 }

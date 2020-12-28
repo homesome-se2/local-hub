@@ -3,7 +3,6 @@ package models;
 import java.util.List;
 
 public class GadgetGroup {
-    //TODO
     //Create groups.json and read into groupsList in ClientApp
 
     public String groupName;

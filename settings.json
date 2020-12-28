@@ -1,6 +1,10 @@
 {
-	"remoteAccessEnable" : "True",
-	"remoteID" : "102",
-	"remotePassword" : "js74bs38hjs54t",
-	"alias" : "Luddes Home"
+	"remoteAccessEnable" : true,
+	"remoteID" : "",
+	"remotePassword" : "",
+	"alias" : "Moues House",
+        "hubLongitude" : 56, 
+        "hubLatitude" : 14,
+        "hubRadius" : 20
 }
+
