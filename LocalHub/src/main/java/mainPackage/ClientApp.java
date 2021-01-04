@@ -3,7 +3,7 @@ package mainPackage;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import com.sun.security.ntlm.Server;
+//import com.sun.security.ntlm.Server;
 import communicationResources.ServerConnection;
 import models.*;
 import org.json.simple.JSONArray;
@@ -27,19 +27,19 @@ public class ClientApp {
 
     //FILES
     // When run from IDE
-    //private static final String gadgets_basic_fileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgets_basic.json");
-    //private static final String gadgets_person_fileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgets_person.json");
-    //private static final String automationFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/automations.json");
-    //private static final String gadgetGroupFile = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgetGroup.json");
-    //private final String settingsFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/settings.json");
+    private static final String gadgets_basic_fileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgets_basic.json");
+    private static final String gadgets_person_fileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgets_person.json");
+    private static final String automationFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/automations.json");
+    private static final String gadgetGroupFile = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgetGroup.json");
+    private final String settingsFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/settings.json");
 
 
     // When run as JAR on Linux
-    private static final String gadgets_basic_fileJSON = "./gadgets_basic.json";
-    private static final String gadgets_person_fileJSON = "./gadgets_person.json";
-    private static final String automationFileJSON = "./automations.json";
-    private static final String gadgetGroupFile = "./gadgetGroup.json";
-    private final String settingsFileJSON = "./settings.json";
+    //private static final String gadgets_basic_fileJSON = "./gadgets_basic.json";
+    //private static final String gadgets_person_fileJSON = "./gadgets_person.json";
+    //private static final String automationFileJSON = "./automations.json";
+    //private static final String gadgetGroupFile = "./gadgetGroup.json";
+    //private final String settingsFileJSON = "./settings.json";
     //Note: 'config.json' should be located "next to" the project folder: [config.json][PublicServer]
 
     private static ClientApp instance = null;
@@ -157,6 +157,7 @@ public class ClientApp {
                         break;
                     case "620":
                         addGadgets(commands);
+                        break;
                     case "901":
                         System.out.println("ExceptionMessage: " + commands[1]);
                         break;
@@ -435,7 +436,7 @@ public class ClientApp {
                     // Generate the rest of the values:
                     int gadgetID = generateGadgetID();
                     String valueTemplate = "default";
-                    long pollDelaySeconds = 30;
+                    long pollDelaySeconds = 5; //TODO: Increase to ~30sec AFTER PRESENTATION
                     GadgetBasic newGadget = new GadgetBasic(gadgetID, alias, type, valueTemplate, requestSpec, pollDelaySeconds, gadgetPort,gadgetIp, true, unitMac);
                     synchronized (lock_gadgets) {
                         gadgets.put(gadgetID, newGadget);
