@@ -2,6 +2,7 @@
 	"remoteAccessEnable" : true,
 	"remoteID" : "",
 	"remotePassword" : "",
+	"enableAddGadgets": true,
 	"alias" : "Moues House",
         "hubLongitude" : 56, 
         "hubLatitude" : 14,
