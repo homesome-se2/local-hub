@@ -1,2 +1,26 @@
 [
+	{
+    "pollDelaySec": 30,
+    "port": 8085,
+    "enable": true,
+    "requestSpec": "null",
+    "ip": "192.168.1.104",
+    "unitMac": "5C:CF:7F:0B:98:D8",
+    "alias": "TV",
+    "id": 0,
+    "type": "SWITCH",
+    "valueTemplate": "default"
+  },
+  {
+    "pollDelaySec": 30,
+    "port": 8085,
+    "enable": true,
+    "requestSpec": "indoorLamp",
+    "ip": "192.168.1.104",
+    "unitMac": "5C:CF:7F:0B:98:D8",
+    "alias": "Office Fan",
+    "id": 1,
+    "type": "SWITCH",
+    "valueTemplate": "fan"
+  },
 ]
