@@ -3,6 +3,7 @@
 	"remoteID" : "",
 	"remotePassword" : "",
 	"enableAddGadgets": true,
+	"tcpPortAddGadgets": 8084,
 	"alias" : "Moues House",
     "hubLongitude" : 56, 
     "hubLatitude" : 14,

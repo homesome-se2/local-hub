@@ -1,5 +1,5 @@
 [
-	{
+  {
     "pollDelaySec": 30,
     "port": 8085,
     "enable": true,
@@ -17,7 +17,7 @@
     "enable": true,
     "requestSpec": "indoorLamp",
     "ip": "192.168.1.104",
-    "unitMac": "5C:CF:7F:0B:98:D8",
+    "unitMac": "00:0a:95:9d:68:16",
     "alias": "Office Fan",
     "id": 1,
     "type": "SWITCH",
