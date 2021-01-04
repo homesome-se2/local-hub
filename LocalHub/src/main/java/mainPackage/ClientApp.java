@@ -3,6 +3,7 @@ package mainPackage;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import com.sun.security.ntlm.Server;
 import communicationResources.ServerConnection;
 import models.*;
 import org.json.simple.JSONArray;
@@ -21,6 +22,8 @@ public class ClientApp {
     public Settings settings;
     private Thread pollingThread;
     private final Object lock_gadgets;
+    private GadgetAdder gadgetAdder;
+
 
     //FILES
     // When run from IDE
@@ -54,6 +57,7 @@ public class ClientApp {
         this.lockObject_1 = new Object();
         this.terminate = false;
         this.lock_gadgets = new Object();
+        this.gadgetAdder = null;
 
         this.pollingThread = new Thread(new Runnable() {
             @Override
@@ -84,13 +88,28 @@ public class ClientApp {
             //Start polling thread (handles automations aswell)
             pollingThread.start();
 
+            if (settings.enableAddGadgets) {
+                gadgetAdder = new GadgetAdder(settings.tcpPortAddGadgets);
+                gadgetAdder.launch();
+            }
+
             //Start connection with server using websockets && process input read from server
             if (settings.isRemoteAccessEnable()) {
                 ServerConnection.getInstance().connectToServer(settings.loginString());
+                while (ServerConnection.getInstance().serverStatus != ServerStatus.CONNECTED) {
+                    if (ServerConnection.getInstance().serverStatus == ServerStatus.CONNECTION_ERROR) {
+                        ServerConnection.getInstance().connectToServer(settings.loginString());
+                    } else {
+                        Thread.sleep(2000);
+                        System.out.println("Unable To Connect To Server");
+                    }
+                }
                 inputFromServer();
             } else {
                 System.out.println("Remote Access = False");
             }
+
+
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
@@ -136,6 +155,8 @@ public class ClientApp {
                     case "503":
                         geoLocUpdate(commands);
                         break;
+                    case "620":
+                        addGadgets(commands);
                     case "901":
                         System.out.println("ExceptionMessage: " + commands[1]);
                         break;
@@ -191,7 +212,7 @@ public class ClientApp {
                                         //The gadget has become unavailable and is not present
                                         gadgetConnectionLost(gadget.id);
                                     }
-                                } else if (gadget.isPresent()){
+                                } else if (gadget.isPresent()) {
                                     if (gadget.getState() != stateBefore) {
                                         newStateOfGadgetDetected(gadget.id, gadget.getState());
                                     }
@@ -383,6 +404,52 @@ public class ClientApp {
         }
     }
 
+    // Used when adding gadgets (plug & play) to verify that a gadget do not already exist in hub.
+    private boolean gadgetAlreadyAdded(String unitMac) {
+        synchronized (lock_gadgets) {
+            for (int key : gadgets.keySet()) {
+                Gadget gadget = gadgets.get(key);
+                if (gadget instanceof GadgetBasic) {
+                    if(((GadgetBasic) gadget).getUnitMac().equals(unitMac)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+    }
+
+    // #620
+    private void addGadgets(String[] request) {
+        try {
+            String gadgetIp = request[request.length-1]; // Appended by class GadgetAdder.
+            String unitMac = request[1];
+            if(!gadgetAlreadyAdded(unitMac)) {
+                int gadgetPort = Integer.parseInt(request[2]);
+                int nbrOfGadgets = Integer.parseInt(request[3]);
+                int count = 3;
+                for (int i = 0; i < nbrOfGadgets; i++) {
+                    String alias = request[++count];
+                    GadgetType type = GadgetType.valueOf(request[++count]);
+                    String requestSpec = request[++count];
+                    // Generate the rest of the values:
+                    int gadgetID = generateGadgetID();
+                    String valueTemplate = "default";
+                    long pollDelaySeconds = 30;
+                    GadgetBasic newGadget = new GadgetBasic(gadgetID, alias, type, valueTemplate, requestSpec, pollDelaySeconds, gadgetPort,gadgetIp, true, unitMac);
+                    synchronized (lock_gadgets) {
+                        gadgets.put(gadgetID, newGadget);
+                        writeToGadgetBasic(newGadget);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Error on reading in new gadgets.");
+            // Cancel operation
+        }
+        printGadgets();
+    }
+
     //========================= FILE HANDLING ===============================================
     private void readGadgetBasicFile() throws Exception {
         try {
@@ -400,13 +467,44 @@ public class ClientApp {
                 int port = Integer.parseInt(String.valueOf(gadget.get("port")));
                 String ip = (String) gadget.get("ip");
                 boolean enabled = (Boolean) gadget.get("enable");
+                String unitMac = (String) gadget.get("unitMac");
 
-                GadgetBasic gadgetBasic = new GadgetBasic(id, alias, type, valueTemplate, requestSpec, pollDelaySeconds, port, ip, enabled);
+                GadgetBasic gadgetBasic = new GadgetBasic(id, alias, type, valueTemplate, requestSpec, pollDelaySeconds, port, ip, enabled,unitMac);
                 gadgets.put(id, gadgetBasic);
             }
         } catch (Exception e) {
             e.printStackTrace();
             throw new Exception("Problem reading gadgets_basic.json");
+        }
+    }
+
+    private void writeToGadgetBasic(GadgetBasic newGadget) throws Exception{
+        JSONObject gadget = new JSONObject();
+        gadget.put("pollDelaySec", newGadget.pollDelaySec);
+        gadget.put("port", newGadget.getPort());
+        gadget.put("enable", newGadget.isEnabled());
+        gadget.put("requestSpec", newGadget.getRequestSpec());
+        gadget.put("ip", newGadget.getIp());
+        gadget.put("unitMac", newGadget.getUnitMac());
+        gadget.put("alias", newGadget.alias);
+        gadget.put("id", newGadget.id);
+        gadget.put("type", newGadget.type);
+        gadget.put("valueTemplate", newGadget.valueTemplate);
+
+
+        try {
+            JSONParser parser = new JSONParser();
+            JSONArray array = (JSONArray) parser.parse(new FileReader(gadgets_basic_fileJSON));
+            array.add(gadget);
+
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            String prettyJson = gson.toJson(array);
+            try (FileWriter writer = new FileWriter(gadgets_basic_fileJSON)) {
+                writer.write(prettyJson);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new Exception("Problem writing gadgets_basic.json");
         }
     }
 
