@@ -1,12 +1,12 @@
 {
-	"remoteAccessEnable" : true,
-	"remoteID" : "",
-	"remotePassword" : "",
-	"enableAddGadgets": true,
-	"tcpPortAddGadgets": 8084,
-	"alias" : "Moues House",
-    "hubLongitude" : 56, 
-    "hubLatitude" : 14,
-    "hubRadius" : 20
+   "remoteAccessEnable" : true,
+   "remoteID" : "102",
+   "remotePassword" : "js74bs38hjs54t",
+   "enableAddGadgets": true,
+   "tcpPortAddGadgets": 8084,
+   "alias" : "Moues House",
+   "hubLongitude" : 56, 
+   "hubLatitude" : 14,
+   "hubRadius" : 20
 }
 

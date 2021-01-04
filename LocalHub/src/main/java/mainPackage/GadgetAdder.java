@@ -58,13 +58,10 @@ public class GadgetAdder {
             Socket clientSocket = null;
 
             try {
-                System.out.println("Gadget adder waiting client");
                 // Receive client connection requests
                 clientSocket = serverSocket.accept();
                 // Force session timeout after specified interval after connection succeeds.
                 clientSocket.setSoTimeout(3500);
-
-                System.out.println("Gadget adder new client");
 
                 // Obtain output & input streams
                 output = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
@@ -73,7 +70,7 @@ public class GadgetAdder {
                 String request = input.readLine();
                 String commands[] = request.split("::");
 
-                System.out.println("Input from client: " + request);
+                System.out.println("Input to GadgetAdder: " + request);
 
                 // Process requests
                 switch (commands[0]) {
@@ -86,7 +83,7 @@ public class GadgetAdder {
                     case "620": // Request from gadget device to add gadget(s) to hub.
                         output.write(String.format("%s%n", "621"));
                         output.flush();
-                        System.out.println("Request to add gadget(s)");
+                        System.out.println("Request to add gadget(s): " + request);
                         request = String.format("%s::%s", request, getClientIP(clientSocket)); // Append client IP
                         ServerConnection.getInstance().incomingServerCommands.put(request);
                         break;
@@ -98,7 +95,6 @@ public class GadgetAdder {
                 // Ignore
                 System.out.println("Gadget adder socket exception");
             } finally {
-                System.out.println("Gadget adder socket closed");
                 if (clientSocket != null) {
                     clientSocket.close();
                 }
