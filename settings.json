@@ -1,12 +1,12 @@
 {
    "debugMode": true,
    "remoteAccessEnable": true,
-   "remoteID" : "102",
-   "remotePassword" : "js74bs38hjs54t",
+   "remoteID" : "XXXX",
+   "remotePassword" : "XXXX",
    "enableAddGadgets": true,
    "tcpPortAddGadgets": 8084,
    "alias" : "Moe's House",
-   "hubLongitude" : 56, 
-   "hubLatitude" : 14,
-   "hubRadius" : 20
+   "hubLongitude" : 0, 
+   "hubLatitude" : 0,
+   "hubRadius" : 0
 }
