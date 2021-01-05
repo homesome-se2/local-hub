@@ -84,6 +84,7 @@ public class ClientApp {
             //TODO read automations
 
             printGadgets();
+            printGroups();
 
             //Start polling thread (handles automations aswell)
             pollingThread.start();
@@ -186,7 +187,10 @@ public class ClientApp {
                 }
             }
 
+            boolean printChanges;
+
             for (int i = 0; i < nbrOfGadgets; i++) {
+                printChanges = false;
                 synchronized (lock_gadgets) {
                     //TODO, check automations aswell, can be implemented later
                     Gadget gadget = gadgets.get(gadgetKeys[i]);
@@ -208,11 +212,14 @@ public class ClientApp {
                                     //The gadget has either became available or it have turned unavailable
                                     if (gadget.isPresent()) {
                                         //The gadget has become available and is present
+                                        debugLog("Gadget found", gadget.alias);
                                         newGadgetDetected(gadget.id);
                                     } else {
                                         //The gadget has become unavailable and is not present
                                         gadgetConnectionLost(gadget.id);
+                                        debugLog("Gadget lost", gadget.alias);
                                     }
+                                    printChanges = true;
                                 } else if (gadget.isPresent()) {
                                     if (gadget.getState() != stateBefore) {
                                         newStateOfGadgetDetected(gadget.id, gadget.getState());
@@ -223,6 +230,9 @@ public class ClientApp {
                             }
                         }
                     }
+                }
+                if(printChanges) {
+                    printGadgets();
                 }
             }
             try {
@@ -625,16 +635,36 @@ public class ClientApp {
 
     private void printGroups() {
         if (!gadgetGroup.isEmpty()) {
-            System.out.println("=== ALL GROUPS ===");
+            System.out.println(String.format("%n%s%n%s%n%-20s%s%n%s", "GROUPS:", line(), "NAME", "GADGETS", line()));
             for (GadgetGroup aGadgetGroup : gadgetGroup) {
-                System.out.println("GroupName: " + aGadgetGroup.getGroupName());
-                System.out.println("Gadgets: " + Arrays.toString(aGadgetGroup.getGadgets()));
+                System.out.println(String.format("%-20s%s", aGadgetGroup.getGroupName(), Arrays.toString(aGadgetGroup.getGadgets())));
             }
-            System.out.println("====================");
+            System.out.println(line());
         }
     }
 
     private void printGadgets() {
+        if(settings.debugMode) {
+            System.out.println(String.format("%s%n%s%n%-4s%-18s%-5s\t\t%-10s%-9s%-16s%s%n%s", "GADGETS:",
+                    line(), "ID", "ALIAS", "STATE", "PRESENT", "CLASS", "TYPE", "VALUE TEMPLATE", line()));
+            synchronized (lock_gadgets) {
+                for (int gadgetID : gadgets.keySet()) {
+                    Gadget gadget = gadgets.get(gadgetID);
+                    String gadgetClass = gadget instanceof GadgetBasic ? "Basic" : "Person";
+                    String gadgetState = gadget.getState() == -1 ? "N/A" : String.valueOf(gadget.getState());
+                    String present = gadget.isPresent() ? "Yes" : "No";
+                    System.out.println(String.format("%-4s%-18s%5s\t\t%-10s%-9s%-16s%s",
+                            gadget.id, gadget.alias, gadgetState, present, gadgetClass, gadget.type.toString(), gadget.valueTemplate));
+                }
+            }
+            System.out.println(line());
+        }
+    }
+    private String line() {
+        return "=================================================================================";
+    }
+
+    /*private void printGadgets() {
         if (!gadgets.isEmpty()) {
             System.out.println("=== ALL GADGETS ===");
             for (int key : gadgets.keySet()) {
@@ -643,7 +673,7 @@ public class ClientApp {
             }
             System.out.println("====================");
         }
-    }
+    }*/
 
     //========================= SHUT DOWN SEQ ===============================================
     private void updatePersonFile() {
@@ -676,6 +706,12 @@ public class ClientApp {
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Problem updating personFile");
+        }
+    }
+
+    private void debugLog(String title, String log) {
+        if(settings.debugMode) {
+            System.out.println(String.format("%-13s%s", title.concat(":"), log));
         }
     }
 }

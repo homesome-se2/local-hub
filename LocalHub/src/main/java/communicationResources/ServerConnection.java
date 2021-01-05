@@ -104,7 +104,7 @@ public class ServerConnection {
 
     public void writeToServer(String msg) {
         synchronized (lockObject_output) {
-            System.out.println("\n\nMessage to server: " + msg + "\n\n");
+            debugLog("Msg to server", msg);
             try {
                 if ((serverStatus == ServerStatus.CONNECTED) && session.isOpen()) {
                     session.getBasicRemote().sendText(msg);
@@ -118,7 +118,7 @@ public class ServerConnection {
     }
 
     public void newCommandFromServer(String msg) {
-        System.out.println("\n\nMSG from server: " + msg + "\n\n");
+        debugLog("Msg from server", msg);
         try {
             incomingServerCommands.put(msg);
         } catch (Exception e) {
@@ -135,6 +135,12 @@ public class ServerConnection {
             } else {
                 connectToServer(loginRequest);
             }
+        }
+    }
+
+    private void debugLog(String title, String log) {
+        if(ClientApp.getInstance().settings.debugMode) {
+            System.out.println(String.format("%-17s%s", title.concat(":"), log));
         }
     }
 }
