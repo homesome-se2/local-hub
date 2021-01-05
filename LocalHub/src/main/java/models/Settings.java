@@ -2,6 +2,7 @@ package models;
 
 public class Settings {
 
+    public boolean debugMode;
     private boolean remoteAccessEnable;
     private int remoteID;
     private String remotePassword;
@@ -40,6 +41,10 @@ public class Settings {
 
     public int getTcpPortAddGadgets() {
         return tcpPortAddGadgets;
+    }
+
+    public boolean isDebugMode() {
+        return debugMode;
     }
 
     @Override
