@@ -27,19 +27,19 @@ public class ClientApp {
 
     //FILES
     // When run from IDE
-    private static final String gadgets_basic_fileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgets_basic.json");
-    private static final String gadgets_person_fileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgets_person.json");
-    private static final String automationFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/automations.json");
-    private static final String gadgetGroupFile = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgetGroup.json");
-    private final String settingsFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/settings.json");
+    //private static final String gadgets_basic_fileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgets_basic.json");
+    //private static final String gadgets_person_fileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgets_person.json");
+    //private static final String automationFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/automations.json");
+    //private static final String gadgetGroupFile = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgetGroup.json");
+    //private final String settingsFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/settings.json");
 
 
     // When run as JAR on Linux
-    //private static final String gadgets_basic_fileJSON = "./gadgets_basic.json";
-    //private static final String gadgets_person_fileJSON = "./gadgets_person.json";
-    //private static final String automationFileJSON = "./automations.json";
-    //private static final String gadgetGroupFile = "./gadgetGroup.json";
-    //private final String settingsFileJSON = "./settings.json";
+    private static final String gadgets_basic_fileJSON = "./gadgets_basic.json";
+    private static final String gadgets_person_fileJSON = "./gadgets_person.json";
+    private static final String automationFileJSON = "./automations.json";
+    private static final String gadgetGroupFile = "./gadgetGroup.json";
+    private final String settingsFileJSON = "./settings.json";
     //Note: 'config.json' should be located "next to" the project folder: [config.json][PublicServer]
 
     private static ClientApp instance = null;
@@ -84,7 +84,7 @@ public class ClientApp {
             //TODO read automations
 
             printGadgets();
-            printGroups();
+            //printGroups();
 
             //Start polling thread (handles automations aswell)
             pollingThread.start();
@@ -645,16 +645,16 @@ public class ClientApp {
 
     private void printGadgets() {
         if(settings.debugMode) {
-            System.out.println(String.format("%s%n%s%n%-4s%-18s%-5s\t\t%-10s%-9s%-16s%s%n%s", "GADGETS:",
-                    line(), "ID", "ALIAS", "STATE", "PRESENT", "CLASS", "TYPE", "VALUE TEMPLATE", line()));
+            System.out.println(String.format("%s%n%s%n%-4s%-18s%-5s%5s%-10s%-9s%-16s%s%n%s", "GADGETS:",
+                    line(), "ID", "ALIAS", "STATE", "", "PRESENT", "CLASS", "TYPE", "VALUE TEMPLATE", line()));
             synchronized (lock_gadgets) {
                 for (int gadgetID : gadgets.keySet()) {
                     Gadget gadget = gadgets.get(gadgetID);
                     String gadgetClass = gadget instanceof GadgetBasic ? "Basic" : "Person";
-                    String gadgetState = gadget.getState() == -1 ? "N/A" : String.valueOf(gadget.getState());
+                    String gadgetState = gadget.getState() == -1 ? "N/A" : String.format("%.1f", gadget.getState());
                     String present = gadget.isPresent() ? "Yes" : "No";
-                    System.out.println(String.format("%-4s%-18s%5s\t\t%-10s%-9s%-16s%s",
-                            gadget.id, gadget.alias, gadgetState, present, gadgetClass, gadget.type.toString(), gadget.valueTemplate));
+                    System.out.println(String.format("%-4s%-18s%5s%5s%-10s%-9s%-16s%s",
+                            gadget.id, gadget.alias, gadgetState, "", present, gadgetClass, gadget.type.toString(), gadget.valueTemplate));
                 }
             }
             System.out.println(line());
