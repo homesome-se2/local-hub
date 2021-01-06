@@ -710,7 +710,7 @@ public class ClientApp {
 
     private void debugLog(String title, String log) {
         if(settings.debugMode) {
-            System.out.println(String.format("%-17s%s", title.concat(":"), log));
+            System.out.println(String.format("%-18s%s", title.concat(":"), log));
         }
     }
 }

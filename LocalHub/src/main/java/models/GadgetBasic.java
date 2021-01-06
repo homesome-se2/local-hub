@@ -36,7 +36,7 @@ public class GadgetBasic extends Gadget {
             String[] splittedResponse = response.split("::");
             //if state changed
             if (splittedResponse[0].equalsIgnoreCase("314")) {
-                setState(Float.parseFloat(splittedResponse[1]));
+                setState(Double.parseDouble(splittedResponse[1]));
                 setPresent(true);
                 return;
             }
