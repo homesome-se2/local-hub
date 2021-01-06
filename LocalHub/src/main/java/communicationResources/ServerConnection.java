@@ -140,7 +140,8 @@ public class ServerConnection {
 
     private void debugLog(String title, String log) {
         if(ClientApp.getInstance().settings.debugMode) {
-            System.out.println(String.format("%-17s%s", title.concat(":"), log));
+            log = log.length() > 60 ? (log.substring(0, 60)).concat("[...]") : log;
+            System.out.println(String.format("%-18s%s", title.concat(":"), log));
         }
     }
 }
