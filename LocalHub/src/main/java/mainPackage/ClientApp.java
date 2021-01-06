@@ -187,10 +187,9 @@ public class ClientApp {
                 }
             }
 
-            boolean printChanges;
+            boolean printChanges = false;
 
             for (int i = 0; i < nbrOfGadgets; i++) {
-                printChanges = false;
                 synchronized (lock_gadgets) {
                     //TODO, check automations aswell, can be implemented later
                     Gadget gadget = gadgets.get(gadgetKeys[i]);
@@ -231,9 +230,9 @@ public class ClientApp {
                         }
                     }
                 }
-                if(printChanges) {
-                    printGadgets();
-                }
+            }
+            if(printChanges) {
+                printGadgets();
             }
             try {
                 Thread.sleep(20);
@@ -661,7 +660,7 @@ public class ClientApp {
         }
     }
     private String line() {
-        return "=================================================================================";
+        return "==================================================================================";
     }
 
     /*private void printGadgets() {
@@ -711,7 +710,7 @@ public class ClientApp {
 
     private void debugLog(String title, String log) {
         if(settings.debugMode) {
-            System.out.println(String.format("%-13s%s", title.concat(":"), log));
+            System.out.println(String.format("%-17s%s", title.concat(":"), log));
         }
     }
 }
