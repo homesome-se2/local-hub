@@ -13,17 +13,19 @@ public class GadgetBasic extends Gadget {
     private int port;
     private String ip;
     private String requestSpec;
+    private String unitMac;
 
     /**
      * Class representing interface to native HomeSome hardware (physical) com.homesome.model of all GadgetTypes.
      * The com.homesome.model interacted with via this class are commonly built upon Arduino based WiFi-modules.
      */
 
-    public GadgetBasic(int gadgetID, String alias, GadgetType type, String valueTemplate, String requestSpec, long pollDelaySeconds, int port, String ip,boolean enabled) {
+    public GadgetBasic(int gadgetID, String alias, GadgetType type, String valueTemplate, String requestSpec, long pollDelaySeconds, int port, String ip,boolean enabled, String unitMac) {
         super(gadgetID, alias, type, valueTemplate, pollDelaySeconds,enabled);
         this.port = port;
         this.ip = ip;
         this.requestSpec = requestSpec;
+        this.unitMac = unitMac;
     }
 
     @Override
@@ -34,7 +36,7 @@ public class GadgetBasic extends Gadget {
             String[] splittedResponse = response.split("::");
             //if state changed
             if (splittedResponse[0].equalsIgnoreCase("314")) {
-                setState(Float.parseFloat(splittedResponse[1]));
+                setState(Double.parseDouble(splittedResponse[1]));
                 setPresent(true);
                 return;
             }
@@ -127,4 +129,19 @@ public class GadgetBasic extends Gadget {
         }
     }
 
+    public String getUnitMac() {
+        return unitMac;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public String getIp() {
+        return ip;
+    }
+
+    public String getRequestSpec() {
+        return requestSpec;
+    }
 }

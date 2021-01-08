@@ -2,9 +2,12 @@ package models;
 
 public class Settings {
 
+    public boolean debugMode;
     private boolean remoteAccessEnable;
     private int remoteID;
     private String remotePassword;
+    public boolean enableAddGadgets;
+    public int tcpPortAddGadgets;
     private String alias;
     public float hubLongitude;
     public float hubLatitude;
@@ -30,6 +33,18 @@ public class Settings {
 
     public boolean isRemoteAccessEnable() {
         return remoteAccessEnable;
+    }
+
+    public boolean isEnableAddGadgets() {
+        return enableAddGadgets;
+    }
+
+    public int getTcpPortAddGadgets() {
+        return tcpPortAddGadgets;
+    }
+
+    public boolean isDebugMode() {
+        return debugMode;
     }
 
     @Override
