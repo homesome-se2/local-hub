@@ -1,9 +1,9 @@
 {
 	"remoteAccessEnable" : true,
-	"remoteID" : "",
-	"remotePassword" : "",
+	"remoteID" : "102",
+	"remotePassword" : "js74bs38hjs54t",
 	"alias" : "Moues House",
-        "hubLongitude" : 56, 
+		"hubLongitude" : 56, 
         "hubLatitude" : 14,
         "hubRadius" : 20
 }

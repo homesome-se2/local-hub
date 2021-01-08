@@ -28,7 +28,6 @@ public class ClientApp {
     public Settings settings;
     private Thread pollingThread;
     private final Object lock_gadgets;
-    private boolean timerRunning = false;
 
     //FILES
     // When run from IDE
@@ -208,6 +207,9 @@ public class ClientApp {
                                         newStateOfGadgetDetected(gadget.id, gadget.getState());
                                     }
                                 }
+                                if (gadget.isPresent()){
+                                    automationsHandler(gadget);
+                                }
                             } catch (Exception e) {
                                 //System.out.println(e.getMessage());
                             }
@@ -245,34 +247,31 @@ public class ClientApp {
             //Selects based on trigger condition
             switch (automation.getTrigger().getStateCondition()) {
                 case "equal_to":
-                    if (Float.parseFloat(automation.getTrigger().getState()) == gadget.getState()) {
+                    if (automation.getTrigger().getState() == gadget.getState()) {
                         doEvent(automation, gadget);
                     }
                     break;
                 case "lower_than":
-                    if (Float.parseFloat(automation.getTrigger().getState()) > gadget.getState()) {
+                    if (automation.getTrigger().getState() > gadget.getState()) {
                         doEvent(automation, gadget);
                     }
                     break;
                 case "high_than":
-                    if (Float.parseFloat(automation.getTrigger().getState()) < gadget.getState()) {
+                    if (automation.getTrigger().getState() < gadget.getState()) {
                         doEvent(automation, gadget);
                     }
                     break;
                 default:
-                    System.out.println("wrong state condition: " + automation.getTrigger().getStateCondition());
+                    System.out.println("this is a wrong state condition: " + automation.getTrigger().getStateCondition());
             }
-        } else if (automation.getTrigger().getType().equals("time")) {
-            doTime(automation, gadget);
         }
     }
 
-    //Method to do actions from automations
+    //Method to do Events from automations
     public void doEvent(Automation automation, Gadget gadget) throws Exception {
-            List<Action> actions = actionMap.get(gadget.id);
+        List<Action> actions = actionMap.get(gadget.id);
         class AutomationTask extends TimerTask {
             public void run() {
-
                 for (Action action : actions) {
                     try {
                         alterGadgetState(Integer.toString(action.getGadgetID()), Float.toString(action.getState()));
@@ -281,7 +280,7 @@ public class ClientApp {
                     }
                 }
                 automation.setRunning(false);
-                System.out.println(automation + " Ending automation task at: " + new Date());
+                //System.out.println(automation + " Ending automation task at: " + new Date());
             }
         }
 
@@ -290,35 +289,13 @@ public class ClientApp {
         TimerTask task = new AutomationTask(); // creating timer task
 
         if (!automation.isRunning()){
-            System.out.println(automation + " Starting automation at: " + new Date());
+            //System.out.println(automation + " Starting automation at: " + new Date());
             automation.setRunning(true);
             timer.schedule(task, date);// scheduling the task if trigger is on
 
         }
     }
 
-    //method for timed automation
-    private void doTime(Automation automation, Gadget gadget){
-
-        DateTimeFormatter myFormatObj = DateTimeFormatter.ofPattern("HH:mm:ss"); //Date time formatter
-        LocalTime myTimeObj = LocalTime.now(); //Current time
-        LocalTime autoTime = LocalTime.parse(automation.getTrigger().getState(), myFormatObj);//Time of which automations should trigger
-
-        if (myTimeObj.isAfter(autoTime) && myTimeObj.isBefore(autoTime.plusSeconds(gadget.pollDelaySec))){
-            //checks to see if current time is after scheduled time and if its before the scheduled time plus poll delay
-            //If within this window, automation will trigger
-            List<Action> actions = actionMap.get(gadget.id);
-            for (Action action : actions) {
-                try {
-                    System.out.println(automation + "ending automation task at: " + new Date());
-                    alterGadgetState(Integer.toString(action.getGadgetID()), Float.toString(action.getState()));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-    }
 
     //==============================HUB ---> PUBLIC SERVER ==================================
     //315 new state of gadget
@@ -623,7 +600,7 @@ public class ClientApp {
             Map.Entry pair = itr1.next();
             String stateCondition = (String) pair.getValue();
             pair = itr1.next();
-            String state = (String) pair.getValue();
+            Float state = Float.parseFloat((String) pair.getValue());
             pair = itr1.next();
             String type = (String) pair.getValue();
             pair = itr1.next();

@@ -27,7 +27,7 @@ public class GadgetBasic extends Gadget {
     }
 
     @Override
-    public void poll() {
+    public void poll() throws Exception {
         try {
             String response = sendCommand("{\"command\":341,\"requestSpec\":\"" + requestSpec + "\"}");
 

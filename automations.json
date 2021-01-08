@@ -61,7 +61,7 @@
 		"type": "time",
 		"gadget_id": "0",
 		"state_condition": "equal_to"
-		"state": "10:00:00"
+		"state": "9:54:00"
 	},
 	"delay":
 	{
@@ -84,7 +84,7 @@
 		"type": "time",
 		"gadget_id": "0",
 		"state_condition": "equal_to"
-		"state": "10:01:00"
+		"state": "9:55:00"
 	},
 	"delay":
 	{

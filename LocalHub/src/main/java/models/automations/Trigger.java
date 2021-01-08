@@ -1,13 +1,15 @@
 package models.automations;
 
+import com.sun.org.apache.bcel.internal.util.BCELifier;
+
 public class Trigger {
     private String type;
     private int gadgetID;
     private String stateCondition;
-    private String state;
+    private float state;
 
 
-    public Trigger(String type, int gadgetID, String stateCondition, String state) {
+    public Trigger(String type, int gadgetID, String stateCondition, float state) {
         this.type = type;
         this.gadgetID = gadgetID;
         this.stateCondition = stateCondition;
@@ -38,11 +40,11 @@ public class Trigger {
         this.stateCondition = stateCondition;
     }
 
-    public String getState() {
+    public float getState() {
         return state;
     }
 
-    public void setState(String state) {
+    public void setState(float state) {
         this.state = state;
     }
 }
