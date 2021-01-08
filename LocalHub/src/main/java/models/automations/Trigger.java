@@ -1,6 +1,5 @@
 package models.automations;
 
-import com.sun.org.apache.bcel.internal.util.BCELifier;
 
 public class Trigger {
     private String type;

@@ -311,7 +311,6 @@ public class ClientApp {
                     }
                 }
                 automation.setRunning(false);
-                //System.out.println(automation + " Ending automation task at: " + new Date());
             }
         }
 
@@ -320,7 +319,6 @@ public class ClientApp {
         TimerTask task = new AutomationTask(); // creating timer task
 
         if (!automation.isRunning()){
-            //System.out.println(automation + " Starting automation at: " + new Date());
             automation.setRunning(true);
             timer.schedule(task, date);// scheduling the task if trigger is on
 
