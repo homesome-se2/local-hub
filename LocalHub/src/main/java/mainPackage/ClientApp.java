@@ -6,17 +6,24 @@ import com.google.gson.reflect.TypeToken;
 //import com.sun.security.ntlm.Server;
 import communicationResources.ServerConnection;
 import models.*;
+import models.automations.Action;
+import models.automations.Delay;
+import models.automations.Trigger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 import java.io.*;
 import java.lang.reflect.Type;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class ClientApp {
     private HashMap<Integer, Gadget> gadgets;
     private ArrayList<GadgetGroup> gadgetGroup;
+    private ArrayList<Automation> automationsList;
+    private HashMap<Integer, List<Action>> actionMap;
     private final Object lockObject_1;
     public volatile boolean terminate;
     public Settings settings;
@@ -52,6 +59,9 @@ public class ClientApp {
     }
 
     private ClientApp() {
+        this.gadgets = new HashMap<Integer, Gadget>();
+        this.automationsList = new ArrayList<Automation>();
+        this.actionMap = new HashMap<Integer, List<Action>>();
         this.gadgets = new HashMap<>();
         this.gadgetGroup = new ArrayList<>();
         this.lockObject_1 = new Object();
@@ -81,7 +91,8 @@ public class ClientApp {
             readGadgetBasicFile();
             readGadgetPersonFile();
             readGroupsFile();
-            //TODO read automations
+            readAutomationFile();
+            //TODO read groups
 
             printGadgets();
             //printGroups();
@@ -224,6 +235,9 @@ public class ClientApp {
                                         newStateOfGadgetDetected(gadget.id, gadget.getState());
                                     }
                                 }
+                                if (gadget.isPresent()){
+                                    automationsHandler(gadget);
+                                }
                             } catch (Exception e) {
                                 //System.out.println(e.getMessage());
                             }
@@ -241,6 +255,76 @@ public class ClientApp {
             }
         }
     }
+
+    //call and pass gadget to check and do automation
+    private void automationsHandler(Gadget gadget) throws Exception {
+        ArrayList<Integer> gadgetsWithAutomations = new ArrayList<>();
+        //create list of all gadgets which has an automation
+        for (Automation automation : automationsList) {
+            gadgetsWithAutomations.add(automation.getTrigger().getGadgetID());
+        }
+        //returns if the current gadget does not have an automation
+        if (!gadgetsWithAutomations.contains(gadget.id)) {
+            return;
+        }
+        //Assign the current gadgets automation to automation
+        Automation automation = automationsList.get(gadgetsWithAutomations.indexOf(gadget.id));
+        //if not enabled, return
+        if (!automation.isEnabled()) {
+            return;
+        }
+        //Selects based on trigger type
+        if (automation.getTrigger().getType().equals("event")) {
+            //Selects based on trigger condition
+            switch (automation.getTrigger().getStateCondition()) {
+                case "equal_to":
+                    if (automation.getTrigger().getState() == gadget.getState()) {
+                        doEvent(automation, gadget);
+                    }
+                    break;
+                case "lower_than":
+                    if (automation.getTrigger().getState() > gadget.getState()) {
+                        doEvent(automation, gadget);
+                    }
+                    break;
+                case "high_than":
+                    if (automation.getTrigger().getState() < gadget.getState()) {
+                        doEvent(automation, gadget);
+                    }
+                    break;
+                default:
+                    System.out.println("this is a wrong state condition: " + automation.getTrigger().getStateCondition());
+            }
+        }
+    }
+
+    //Method to do Events from automations
+    public void doEvent(Automation automation, Gadget gadget) throws Exception {
+        List<Action> actions = actionMap.get(gadget.id);
+        class AutomationTask extends TimerTask {
+            public void run() {
+                for (Action action : actions) {
+                    try {
+                        alterGadgetState(Integer.toString(action.getGadgetID()), Float.toString(action.getState()));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                automation.setRunning(false);
+            }
+        }
+
+        Date date = new Date(System.currentTimeMillis() + automation.getDelay().timeInMills());//task Execution date
+        Timer timer = new Timer(); // creating timer
+        TimerTask task = new AutomationTask(); // creating timer task
+
+        if (!automation.isRunning()){
+            automation.setRunning(true);
+            timer.schedule(task, date);// scheduling the task if trigger is on
+
+        }
+    }
+
 
     //==============================HUB ---> PUBLIC SERVER ==================================
     //315 new state of gadget
@@ -606,18 +690,54 @@ public class ClientApp {
     }
 
     private void readAutomationFile() throws Exception {
-        //TODO
         JSONParser parser = new JSONParser();
+
         JSONArray array = (JSONArray) parser.parse(new FileReader(automationFileJSON));
+       // ArrayList<Action> actions = new ArrayList<>();
 
         for (Object object : array) {
+            ArrayList<Action> actions = new ArrayList<>();
             JSONObject automations = (JSONObject) object;
-            int masterId = Integer.parseInt((String) automations.get("masterId"));
-            int slaveId = Integer.parseInt((String) automations.get("slaveId"));
-            float masterState = Float.parseFloat((String) automations.get("masterState"));
-            float slaveState = Float.parseFloat((String) automations.get("slaveState"));
+            String name = (String) automations.get("name");
+            boolean enabled = (Boolean) automations.get("enabled");
 
-            Automation automation = new Automation(masterId, slaveId, masterState, slaveState);
+            Map trigger = ((Map) automations.get("trigger"));
+            Iterator<Map.Entry> itr1 = trigger.entrySet().iterator();
+            Map.Entry pair = itr1.next();
+            String stateCondition = (String) pair.getValue();
+            pair = itr1.next();
+            Float state = Float.parseFloat((String) pair.getValue());
+            pair = itr1.next();
+            String type = (String) pair.getValue();
+            pair = itr1.next();
+            int id = Integer.parseInt((String) pair.getValue());
+
+            Map delay = ((Map) automations.get("delay"));
+            Iterator<Map.Entry> itr2 = delay.entrySet().iterator();
+            Map.Entry pair1 = itr2.next();
+            int hours = Integer.parseInt((String) pair1.getValue());
+            pair1 = itr2.next();
+            int seconds = Integer.parseInt((String) pair1.getValue());
+            pair1 = itr2.next();
+            int minutes = Integer.parseInt((String) pair1.getValue());
+
+
+            JSONArray jAction = (JSONArray) automations.get("action");
+            Iterator itr3 = jAction.iterator();
+
+            while (itr3.hasNext()) {
+                itr2 = ((Map) itr3.next()).entrySet().iterator();
+                while (itr2.hasNext()) {
+                    Map.Entry pair2 = itr2.next();
+                    float state2 = Float.parseFloat((String) pair2.getValue());
+                    pair2 = itr2.next();
+                    int gadgetID = Integer.parseInt((String) pair2.getValue());
+                    actions.add(new Action(gadgetID, state2));
+                }
+            }
+            Automation automation = new Automation(name, enabled, new Trigger(type, id, stateCondition, state), new Delay(hours, minutes, seconds));
+            automationsList.add(automation);
+            actionMap.put(id, actions);
         }
     }
 

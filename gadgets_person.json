@@ -1,11 +1,1 @@
-[
-  {
-    "pollDelaySec": 60,
-    "enable": true,
-    "lastUpdate": "2020-12-21 15:41",
-    "alias": "Moe",
-    "nameID": "Moe",
-    "id": 0,
-    "lastState": 0.0
-  }
-]
+[]
