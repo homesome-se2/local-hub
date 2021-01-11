@@ -1,7 +1,7 @@
 {
    "debugMode": true,
    "remoteAccessEnable": true,
-   "remoteID" : "XXXX",
+   "remoteID" : "103",
    "remotePassword" : "XXXX",
    "enableAddGadgets": true,
    "tcpPortAddGadgets": 8084,
