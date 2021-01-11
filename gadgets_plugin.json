@@ -1,8 +1,8 @@
 {
   "local_pi_cpu_temp": {
-    "enable": true,
-    "alias": "Rasp Pi CPU"
+    "enable": false,
+    "alias": "Rasp Pi CPU",
     "id": 14,
-    "pollDelaySec": 30,
+    "pollDelaySec": 30
   }
 }
