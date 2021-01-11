@@ -6,7 +6,7 @@ import java.io.FileReader;
 import java.io.IOException;
 
 public class GadgetLocalPi extends Gadget {
-    /** 
+    /**  
      * Note: This plugin is configured to work in Hubs
      * running on a Raspberry Pi 3 Model B+ with Debian GNU/Linux.
      */
