@@ -36,6 +36,7 @@ public class ClientApp {
     // When run from IDE
     //private static final String gadgets_basic_fileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgets_basic.json");
     //private static final String gadgets_person_fileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgets_person.json");
+    //private static final String gadgets_plugin_fileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgets_plugin.json");
     //private static final String automationFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/automations.json");
     //private static final String gadgetGroupFile = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/gadgetGroup.json");
     //private final String settingsFileJSON = (new File(System.getProperty("user.dir")).getParentFile().getPath()).concat("/settings.json");
@@ -44,6 +45,7 @@ public class ClientApp {
     // When run as JAR on Linux
     private static final String gadgets_basic_fileJSON = "./gadgets_basic.json";
     private static final String gadgets_person_fileJSON = "./gadgets_person.json";
+    private static final String gadgets_plugin_fileJSON = "./gadgets_plugin.json";
     private static final String automationFileJSON = "./automations.json";
     private static final String gadgetGroupFile = "./gadgetGroup.json";
     private final String settingsFileJSON = "./settings.json";
@@ -90,6 +92,7 @@ public class ClientApp {
             readInSettings();
             readGadgetBasicFile();
             readGadgetPersonFile();
+            readGadgetPluginFile();
             readGroupsFile();
             readAutomationFile();
             //TODO read groups
@@ -140,9 +143,10 @@ public class ClientApp {
     private void inputFromServer() throws Exception {
         //PS --> H
         while (!terminate) {
-            String commandFromServer = ServerConnection.getInstance().incomingServerCommands.take();
-            String[] commands = commandFromServer.trim().split("::");
             try {
+                String commandFromServer = ServerConnection.getInstance().incomingServerCommands.take();
+                String[] commands = commandFromServer.trim().split("::");
+
                 switch (commands[0]) {
                     case "121":
                         //H login successful
@@ -178,7 +182,7 @@ public class ClientApp {
                         break;
                 }
             } catch (Exception e) {
-                throw new Exception(e.getMessage());
+                System.out.println(e.getMessage());
             }
         }
     }
@@ -417,7 +421,7 @@ public class ClientApp {
                         ServerConnection.getInstance().writeToServer("315::" + ID + "::" + gadgets.get(ID).getState());
                     }
                 } catch (Exception e) {
-                    ServerConnection.getInstance().writeToServer("353::" + gadgetID);
+                    ServerConnection.getInstance().writeToServer("353::" + gadgetID); //TODO?? Remove and just send back same state as before...
                     System.out.println("Problem when altering state of gadget: " + gadgetID);
                 }
             }
@@ -752,6 +756,25 @@ public class ClientApp {
         }
     }
 
+    private void readGadgetPluginFile() {
+        JSONParser parser = new JSONParser();
+        try {
+            JSONObject jsonObject = (JSONObject) parser.parse(new FileReader(gadgets_plugin_fileJSON));
+
+            JSONObject gadgetLocalPi = (JSONObject) jsonObject.get("local_pi_cpu_temp");
+            if((Boolean) gadgetLocalPi.get("enable")) {
+                int gadgetID = Integer.parseInt(String.valueOf(gadgetLocalPi.get("id")));
+                String gadgetAlias = (String) gadgetLocalPi.get("alias");
+                long pollDelaySeconds = Long.parseLong(String.valueOf(gadgetLocalPi.get("pollDelaySec")));
+                synchronized (lock_gadgets) {
+                    gadgets.put(gadgetID, new GadgetLocalPi(gadgetID, gadgetAlias, pollDelaySeconds));
+                }
+            }
+        } catch(Exception e) {
+            System.out.println("Unable to read plugin gadgets file (gadgets_plugin.json)");
+        }
+    }
+
     private void printGroups() {
         if (!gadgetGroup.isEmpty()) {
             System.out.println(String.format("%n%s%n%s%n%-20s%s%n%s", "GROUPS:", line(), "NAME", "GADGETS", line()));
@@ -769,7 +792,8 @@ public class ClientApp {
             synchronized (lock_gadgets) {
                 for (int gadgetID : gadgets.keySet()) {
                     Gadget gadget = gadgets.get(gadgetID);
-                    String gadgetClass = gadget instanceof GadgetBasic ? "Basic" : "Person";
+                    String gadgetClass = gadget.getClass().getSimpleName().substring(6);
+                    //gadgetClass = gadgetClass.substring(6);
                     String gadgetState = gadget.getState() == -1 ? "N/A" : String.format("%.1f", gadget.getState());
                     String present = gadget.isPresent() ? "Yes" : "No";
                     System.out.println(String.format("%-4s%-18s%5s%5s%-10s%-9s%-16s%s",

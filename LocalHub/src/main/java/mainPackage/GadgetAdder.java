@@ -30,7 +30,7 @@ public class GadgetAdder {
     }
 
     public void launch() {
-        System.out.println(String.format("Gadget adder running on %s:%s", getServerIP(), port));
+        debugLog(String.format("Gadget adder running on %s:%s", getServerIP(), port));
 
         listener.start();
     }
@@ -41,9 +41,9 @@ public class GadgetAdder {
                 serverSocket.close();
                 serverSocket = null;
             }
-            System.out.println("Closing GadgetAdder");
+            debugLog("Closing GadgetAdder");
         } catch (IOException e) {
-            System.out.println("Gadget adder shutting down.");
+            debugLog("Gadget adder shutting down.");
         }
     }
 
@@ -70,7 +70,7 @@ public class GadgetAdder {
                 String request = input.readLine();
                 String commands[] = request.split("::");
 
-                System.out.println("Input to GadgetAdder: " + request);
+                debugLog("Input: " + request);
 
                 // Process requests
                 switch (commands[0]) {
@@ -78,22 +78,23 @@ public class GadgetAdder {
                         String response = String.format("%s::%s%n", "602", ClientApp.getInstance().settings.getAlias());
                         output.write(response);
                         output.flush();
-                        System.out.println("Hub is pinged");
+                        debugLog("Hub is pinged");
                         break;
                     case "620": // Request from gadget device to add gadget(s) to hub.
-                        output.write(String.format("%s%n", "621"));
-                        output.flush();
-                        System.out.println("Request to add gadget(s): " + request);
+                        debugLog("Add gadget(s): " + request);
                         request = String.format("%s::%s", request, getClientIP(clientSocket)); // Append client IP
                         ServerConnection.getInstance().incomingServerCommands.put(request);
+                        // Respond with confirmation
+                        output.write(String.format("%s%n", "621"));
+                        output.flush();
                         break;
                     default:
-                        System.out.println("Invalid msg from client");
+                        debugLog("Invalid msg from client");
                         break;
                 }
             } catch (Exception e) {
                 // Ignore
-                System.out.println("Gadget adder socket exception");
+                debugLog("Gadget adder socket exception");
             } finally {
                 if (clientSocket != null) {
                     clientSocket.close();
@@ -112,5 +113,10 @@ public class GadgetAdder {
 
     private String getClientIP(Socket socket) {
         return socket.getInetAddress().toString().substring(1); // IP-format "/X.X.X.X" to "X.X.X.X"
+    }
+
+    private void debugLog(String log) {
+        // Print GadgetAdder logs even if not in debugMode
+        System.out.println(String.format("%-18s%s", "GadgetAdder:", log));
     }
 }
